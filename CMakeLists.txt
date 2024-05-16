@@ -19,7 +19,7 @@ find_package(geometry_msgs REQUIRED)
 
 add_executable(${PROJECT_NAME}
   src/synapse_ros.cpp
-  src/proto/udp_link.cpp
+  src/link/udp_link.cpp
   )
 
 ament_target_dependencies(${PROJECT_NAME}

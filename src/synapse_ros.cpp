@@ -1,5 +1,5 @@
 #include "synapse_ros.hpp"
-#include "proto/udp_link.hpp"
+#include "link/udp_link.hpp"
 #include <rclcpp/logger.hpp>
 #include <sensor_msgs/msg/detail/battery_state__struct.hpp>
 #include <sensor_msgs/msg/detail/joint_state__struct.hpp>
