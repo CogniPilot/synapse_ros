@@ -185,6 +185,7 @@ void SynapseRos::publish_status(const synapse::msgs::Status& msg)
     ros_msg.arming = msg.arming();
     ros_msg.fuel = msg.fuel();
     ros_msg.joy = msg.joy();
+    ros_msg.command_source = msg.command_source();
     ros_msg.mode = msg.mode();
     ros_msg.safety = msg.safety();
     ros_msg.fuel_percentage = msg.fuel_percentage();
