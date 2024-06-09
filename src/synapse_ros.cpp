@@ -47,6 +47,9 @@ SynapseRos::SynapseRos()
     sub_odom_ = this->create_subscription<nav_msgs::msg::Odometry>(
         "in/odometry", 10, std::bind(&SynapseRos::odometry_callback, this, _1));
 
+    sub_clock_offset_ = this->create_subscription<builtin_interfaces::msg::Time>(
+        "out/clock_offset", 10, std::bind(&SynapseRos::clock_offset_callback, this, _1));
+
     if (hil_mode) {
         sub_imu_ = this->create_subscription<sensor_msgs::msg::Imu>(
             "in/imu", 10, std::bind(&SynapseRos::imu_callback, this, _1));
@@ -426,6 +429,21 @@ void SynapseRos::wheel_odometry_callback(const sensor_msgs::msg::JointState& msg
         std::cerr << "Failed to serialize WheelOdometry" << std::endl;
     }
     tf_send(SYNAPSE_WHEEL_ODOMETRY_TOPIC, data);
+}
+
+void SynapseRos::clock_offset_callback(const builtin_interfaces::msg::Time& msg) const
+{
+    // construct empty syn_msg
+    synapse::msgs::Time syn_msg {};
+
+    syn_msg.set_sec(msg.sec);
+    syn_msg.set_nanosec(msg.nanosec);
+
+    std::string data;
+    if (!syn_msg.SerializeToString(&data)) {
+        std::cerr << "Failed to serialize Clock Offset" << std::endl;
+    }
+    tf_send(SYNAPSE_CLOCK_OFFSET_TOPIC, data);
 }
 
 void SynapseRos::battery_state_callback(const sensor_msgs::msg::BatteryState& msg) const
