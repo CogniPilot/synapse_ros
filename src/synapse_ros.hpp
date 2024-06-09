@@ -63,6 +63,7 @@ private:
     rclcpp::Subscription<actuator_msgs::msg::Actuators>::SharedPtr sub_actuators_;
     rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr sub_cmd_vel_;
     rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_odom_;
+    rclcpp::Subscription<builtin_interfaces::msg::Time>::SharedPtr sub_clock_offset_;
     rclcpp::Subscription<sensor_msgs::msg::BatteryState>::SharedPtr sub_battery_state_;
     rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr sub_imu_;
     rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr sub_wheel_odometry_;
@@ -81,6 +82,7 @@ private:
     void magnetic_field_callback(const sensor_msgs::msg::MagneticField& msg) const;
     void nav_sat_fix_callback(const sensor_msgs::msg::NavSatFix& msg) const;
     void odometry_callback(const nav_msgs::msg::Odometry& msg) const;
+    void clock_offset_callback(const builtin_interfaces::msg::Time& msg) const;
     void wheel_odometry_callback(const sensor_msgs::msg::JointState& msg) const;
 
     // publications cerebri -> ros
