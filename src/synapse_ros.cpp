@@ -6,6 +6,7 @@
 #include <sensor_msgs/msg/detail/magnetic_field__struct.hpp>
 #include <sensor_msgs/msg/detail/nav_sat_fix__struct.hpp>
 #include <synapse_protobuf/battery_state.pb.h>
+#include <synapse_protobuf/input.pb.h>
 #include <synapse_protobuf/magnetic_field.pb.h>
 #include <synapse_protobuf/nav_sat_fix.pb.h>
 #include <synapse_protobuf/wheel_odometry.pb.h>
@@ -41,8 +42,8 @@ SynapseRos::SynapseRos()
     sub_cmd_vel_ = this->create_subscription<geometry_msgs::msg::Twist>(
         "in/cmd_vel", 10, std::bind(&SynapseRos::cmd_vel_callback, this, _1));
 
-    sub_joy_ = this->create_subscription<sensor_msgs::msg::Joy>(
-        "in/joy", 10, std::bind(&SynapseRos::joy_callback, this, _1));
+    sub_input_ = this->create_subscription<synapse_msgs::msg::Input>(
+        "in/input", 10, std::bind(&SynapseRos::input_callback, this, _1));
 
     sub_odom_ = this->create_subscription<nav_msgs::msg::Odometry>(
         "in/odometry", 10, std::bind(&SynapseRos::odometry_callback, this, _1));
@@ -186,17 +187,19 @@ void SynapseRos::publish_status(const synapse::msgs::Status& msg)
     }
 
     ros_msg.arming = msg.arming();
-    ros_msg.fuel = msg.fuel();
-    ros_msg.joy = msg.joy();
-    ros_msg.joy_source = msg.joy_source();
+    ros_msg.status_message = msg.status_message();
+    ros_msg.input_status = msg.input_status();
+    ros_msg.input_source = msg.input_source();
+    ros_msg.topic_status = msg.topic_status();
     ros_msg.topic_source = msg.topic_source();
+    ros_msg.electrode_status = msg.electrode_status();
     ros_msg.mode = msg.mode();
     ros_msg.safety = msg.safety();
+    ros_msg.fuel = msg.fuel();
     ros_msg.fuel_percentage = msg.fuel_percentage();
     ros_msg.power = msg.power();
-    ros_msg.status_message = msg.status_message();
-    ros_msg.request_rejected = msg.request_rejected();
     ros_msg.request_seq = msg.request_seq();
+    ros_msg.request_rejected = msg.request_rejected();
 
     pub_status_->publish(ros_msg);
 }
@@ -322,22 +325,18 @@ void SynapseRos::cmd_vel_callback(const geometry_msgs::msg::Twist& msg) const
     tf_send(SYNAPSE_CMD_VEL_TOPIC, data);
 }
 
-void SynapseRos::joy_callback(const sensor_msgs::msg::Joy& msg) const
+void SynapseRos::input_callback(const synapse_msgs::msg::Input& msg) const
 {
-    synapse::msgs::Joy syn_msg;
-    for (auto i = 0u; i < msg.axes.size(); ++i) {
-        syn_msg.add_axes(msg.axes[i]);
-    }
-
-    for (auto i = 0u; i < msg.buttons.size(); ++i) {
-        syn_msg.add_buttons(msg.buttons[i]);
+    synapse::msgs::Input syn_msg;
+    for (auto i = 0u; i < msg.channel.size(); ++i) {
+        syn_msg.add_channel(msg.channel[i]);
     }
 
     std::string data;
     if (!syn_msg.SerializeToString(&data)) {
-        std::cerr << "Failed to serialize Joy" << std::endl;
+        std::cerr << "Failed to serialize Input" << std::endl;
     }
-    tf_send(SYNAPSE_JOY_TOPIC, data);
+    tf_send(SYNAPSE_INPUT_TOPIC, data);
 }
 
 void SynapseRos::odometry_callback(const nav_msgs::msg::Odometry& msg) const

@@ -13,11 +13,11 @@
 #include <sensor_msgs/msg/detail/nav_sat_fix__struct.hpp>
 #include <sensor_msgs/msg/imu.hpp>
 #include <sensor_msgs/msg/joint_state.hpp>
-#include <sensor_msgs/msg/joy.hpp>
 #include <sensor_msgs/msg/magnetic_field.hpp>
 #include <sensor_msgs/msg/nav_sat_fix.hpp>
 
 #include <synapse_msgs/msg/bezier_trajectory.hpp>
+#include <synapse_msgs/msg/input.hpp>
 #include <synapse_msgs/msg/status.hpp>
 
 #include <synapse_protobuf/actuators.pb.h>
@@ -67,7 +67,7 @@ private:
     rclcpp::Subscription<sensor_msgs::msg::BatteryState>::SharedPtr sub_battery_state_;
     rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr sub_imu_;
     rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr sub_wheel_odometry_;
-    rclcpp::Subscription<sensor_msgs::msg::Joy>::SharedPtr sub_joy_;
+    rclcpp::Subscription<synapse_msgs::msg::Input>::SharedPtr sub_input_;
     rclcpp::Subscription<sensor_msgs::msg::MagneticField>::SharedPtr sub_magnetic_field_;
     rclcpp::Subscription<sensor_msgs::msg::NavSatFix>::SharedPtr sub_nav_sat_fix_;
     rclcpp::Subscription<synapse_msgs::msg::BezierTrajectory>::SharedPtr sub_bezier_trajectory_;
@@ -78,7 +78,7 @@ private:
     void bezier_trajectory_callback(const synapse_msgs::msg::BezierTrajectory& msg) const;
     void cmd_vel_callback(const geometry_msgs::msg::Twist& msg) const;
     void imu_callback(const sensor_msgs::msg::Imu& msg) const;
-    void joy_callback(const sensor_msgs::msg::Joy& msg) const;
+    void input_callback(const synapse_msgs::msg::Input& msg) const;
     void magnetic_field_callback(const sensor_msgs::msg::MagneticField& msg) const;
     void nav_sat_fix_callback(const sensor_msgs::msg::NavSatFix& msg) const;
     void odometry_callback(const nav_msgs::msg::Odometry& msg) const;
