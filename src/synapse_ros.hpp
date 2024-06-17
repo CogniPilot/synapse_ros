@@ -25,7 +25,6 @@
 #include <synapse_protobuf/bezier_trajectory.pb.h>
 #include <synapse_protobuf/header.pb.h>
 #include <synapse_protobuf/imu.pb.h>
-#include <synapse_protobuf/joy.pb.h>
 #include <synapse_protobuf/magnetic_field.pb.h>
 #include <synapse_protobuf/nav_sat_fix.pb.h>
 #include <synapse_protobuf/odometry.pb.h>
