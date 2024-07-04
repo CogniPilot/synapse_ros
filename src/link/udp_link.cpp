@@ -1,6 +1,5 @@
+#include <synapse_protobuf/frame.pb.h>
 #include <synapse_protobuf/nav_sat_fix.pb.h>
-#include <synapse_tinyframe/SynapseTopics.h>
-#include <synapse_tinyframe/utils.h>
 
 #include <synapse_protobuf/actuators.pb.h>
 #include <synapse_protobuf/odometry.pb.h>
@@ -11,38 +10,18 @@
 
 #include "../synapse_ros.hpp"
 #include "udp_link.hpp"
+#include <google/protobuf/util/delimited_message_util.h>
+
+using namespace google::protobuf::util;
 
 using boost::asio::ip::udp;
 using std::placeholders::_1;
 using std::placeholders::_2;
 
-static void write_udp(TinyFrame* tf, const uint8_t* buf, uint32_t len)
-{
-    // get udp link attached to tf pointer in userdata
-    UDPLink* udp_link = (UDPLink*)tf->userdata;
-
-    // write buffer to udp link
-    udp_link->write(buf, len);
-}
-
 UDPLink::UDPLink(std::string host, int port)
 {
     remote_endpoint_ = *udp::resolver(io_context_).resolve(udp::resolver::query(host, std::to_string(port)));
     my_endpoint_ = udp::endpoint(udp::v4(), 4242);
-
-    // Set up the TinyFrame library
-    tf_ = std::make_shared<TinyFrame>(*TF_Init(TF_MASTER, write_udp));
-    tf_->usertag = 0;
-    tf_->userdata = this;
-    tf_->write = write_udp;
-    TF_AddGenericListener(tf_.get(), UDPLink::generic_listener);
-    TF_AddTypeListener(tf_.get(), SYNAPSE_CMD_VEL_TOPIC, UDPLink::out_cmd_vel_listener);
-    TF_AddTypeListener(tf_.get(), SYNAPSE_ACTUATORS_TOPIC, UDPLink::actuators_listener);
-    TF_AddTypeListener(tf_.get(), SYNAPSE_ODOMETRY_TOPIC, UDPLink::odometry_listener);
-    TF_AddTypeListener(tf_.get(), SYNAPSE_BATTERY_STATE_TOPIC, UDPLink::battery_state_listener);
-    TF_AddTypeListener(tf_.get(), SYNAPSE_NAV_SAT_FIX_TOPIC, UDPLink::nav_sat_fix_listener);
-    TF_AddTypeListener(tf_.get(), SYNAPSE_STATUS_TOPIC, UDPLink::status_listener);
-    TF_AddTypeListener(tf_.get(), SYNAPSE_UPTIME_TOPIC, UDPLink::uptime_listener);
 
     // schedule new rx
     sock_.async_receive_from(boost::asio::buffer(rx_buf_, rx_buf_length_),
@@ -72,138 +51,55 @@ void UDPLink::rx_handler(const boost::system::error_code& ec, std::size_t bytes_
         std::cerr << "rx error: " << ec.message() << std::endl;
     } else if (ec == boost::system::errc::success) {
         const std::lock_guard<std::mutex> lock(guard_rx_buf_);
-        TF_Accept(tf_.get(), rx_buf_, bytes_transferred);
+
+        // parse protobuf message
+        static synapse::msgs::Frame frame;
+        frame.Clear();
+        auto stream = google::protobuf::io::CodedInputStream(rx_buf_, bytes_transferred);
+        while (true) {
+            bool clean_eof = true;
+            if (!ParseDelimitedFromCodedStream(&frame, &stream, &clean_eof)) {
+                if (!clean_eof) {
+                    std::cerr << "Failed to parse frame: bytes: " << bytes_transferred << std::endl;
+                }
+                break;
+            } else {
+                if (frame.msg_case() == synapse::msgs::Frame::kActuators) {
+                    if (frame.topic() == synapse::msgs::TOPIC_ACTUATORS) {
+                        ros_->publish_actuators(frame.actuators());
+                    }
+                } else if (frame.msg_case() == synapse::msgs::Frame::kOdometry) {
+                    if (frame.topic() == synapse::msgs::TOPIC_ODOMETRY) {
+                        ros_->publish_odometry(frame.odometry());
+                    }
+                } else if (frame.msg_case() == synapse::msgs::Frame::kTwist) {
+                    if (frame.topic() == synapse::msgs::TOPIC_CMD_VEL) {
+                        ros_->publish_odometry(frame.odometry());
+                    }
+                } else if (frame.msg_case() == synapse::msgs::Frame::kNavSatFix) {
+                    if (frame.topic() == synapse::msgs::TOPIC_NAV_SAT_FIX) {
+                        ros_->publish_nav_sat_fix(frame.nav_sat_fix());
+                    }
+                } else if (frame.msg_case() == synapse::msgs::Frame::kStatus) {
+                    if (frame.topic() == synapse::msgs::TOPIC_STATUS) {
+                        ros_->publish_status(frame.status());
+                    }
+                } else if (frame.msg_case() == synapse::msgs::Frame::kTime) {
+                    if (frame.topic() == synapse::msgs::TOPIC_UPTIME) {
+                        ros_->publish_uptime(frame.time());
+                    }
+                } else {
+                    std::cerr << "unhandled message case" << frame.msg_case() << std::endl;
+                    break;
+                }
+            }
+        }
     }
 
     // schedule new rx
     sock_.async_receive_from(boost::asio::buffer(rx_buf_, rx_buf_length_),
         my_endpoint_,
         std::bind(&UDPLink::rx_handler, this, _1, _2));
-}
-
-TF_Result UDPLink::actuators_listener(TinyFrame* tf, TF_Msg* frame)
-{
-    synapse::msgs::Actuators msg;
-
-    // get udp link attached to tf pointer in userdata
-    UDPLink* udp_link = (UDPLink*)tf->userdata;
-
-    if (!msg.ParseFromArray(frame->data, frame->len)) {
-        std::cerr << "Failed to parse actuators" << std::endl;
-        return TF_STAY;
-    }
-
-    // send to ros
-    if (udp_link->ros_ != NULL) {
-        udp_link->ros_->publish_actuators(msg);
-    }
-    return TF_STAY;
-}
-
-TF_Result UDPLink::odometry_listener(TinyFrame* tf, TF_Msg* frame)
-{
-    // parse protobuf message
-    synapse::msgs::Odometry syn_msg;
-    if (!syn_msg.ParseFromArray(frame->data, frame->len)) {
-        std::cerr << "Failed to parse odometry" << std::endl;
-        return TF_STAY;
-    }
-
-    // send to ros
-    UDPLink* udp_link = (UDPLink*)tf->userdata;
-    if (udp_link->ros_ != NULL) {
-        udp_link->ros_->publish_odometry(syn_msg);
-    }
-    return TF_STAY;
-}
-
-TF_Result UDPLink::battery_state_listener(TinyFrame* tf, TF_Msg* frame)
-{
-    // parse protobuf message
-    synapse::msgs::BatteryState syn_msg;
-    if (!syn_msg.ParseFromArray(frame->data, frame->len)) {
-        std::cerr << "Failed to parse battery state" << std::endl;
-        return TF_STAY;
-    }
-
-    // send to ros
-    UDPLink* udp_link = (UDPLink*)tf->userdata;
-    if (udp_link->ros_ != NULL) {
-        udp_link->ros_->publish_battery_state(syn_msg);
-    }
-    return TF_STAY;
-}
-
-TF_Result UDPLink::nav_sat_fix_listener(TinyFrame* tf, TF_Msg* frame)
-{
-    // parse protobuf message
-    synapse::msgs::NavSatFix syn_msg;
-    if (!syn_msg.ParseFromArray(frame->data, frame->len)) {
-        std::cerr << "Failed to parse battery state" << std::endl;
-        return TF_STAY;
-    }
-
-    // send to ros
-    UDPLink* udp_link = (UDPLink*)tf->userdata;
-    if (udp_link->ros_ != NULL) {
-        udp_link->ros_->publish_nav_sat_fix(syn_msg);
-    }
-    return TF_STAY;
-}
-
-TF_Result UDPLink::status_listener(TinyFrame* tf, TF_Msg* frame)
-{
-    // parse protobuf message
-    synapse::msgs::Status syn_msg;
-    if (!syn_msg.ParseFromArray(frame->data, frame->len)) {
-        std::cerr << "Failed to parse status" << std::endl;
-        return TF_STAY;
-    }
-
-    // send to ros
-    UDPLink* udp_link = (UDPLink*)tf->userdata;
-    if (udp_link->ros_ != NULL) {
-        udp_link->ros_->publish_status(syn_msg);
-    }
-    return TF_STAY;
-}
-
-TF_Result UDPLink::out_cmd_vel_listener(TinyFrame* tf, TF_Msg* frame)
-{
-    (void)tf;
-    synapse::msgs::Twist msg;
-    if (!msg.ParseFromArray(frame->data, frame->len)) {
-        std::cerr << "Failed to out_cmd_vel" << std::endl;
-        return TF_STAY;
-    } else {
-    }
-    return TF_STAY;
-}
-
-TF_Result UDPLink::uptime_listener(TinyFrame* tf, TF_Msg* frame)
-{
-    // parse protobuf message
-    synapse::msgs::Time syn_msg;
-    if (!syn_msg.ParseFromArray(frame->data, frame->len)) {
-        std::cerr << "Failed to parse uptime" << std::endl;
-        return TF_STAY;
-    }
-
-    // send to ros
-    UDPLink* udp_link = (UDPLink*)tf->userdata;
-    if (udp_link->ros_ != NULL) {
-        udp_link->ros_->publish_uptime(syn_msg);
-    }
-    return TF_STAY;
-}
-
-TF_Result UDPLink::generic_listener(TinyFrame* tf, TF_Msg* msg)
-{
-    (void)tf;
-    int type = msg->type;
-    std::cout << "generic listener id:" << type << std::endl;
-    dumpFrameInfo(msg);
-    return TF_STAY;
 }
 
 void UDPLink::run_for(std::chrono::seconds sec)
