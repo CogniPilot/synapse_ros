@@ -23,6 +23,7 @@
 #include <synapse_protobuf/actuators.pb.h>
 #include <synapse_protobuf/battery_state.pb.h>
 #include <synapse_protobuf/bezier_trajectory.pb.h>
+#include <synapse_protobuf/frame.pb.h>
 #include <synapse_protobuf/header.pb.h>
 #include <synapse_protobuf/imu.pb.h>
 #include <synapse_protobuf/magnetic_field.pb.h>
@@ -33,9 +34,6 @@
 #include <synapse_protobuf/twist.pb.h>
 #include <synapse_protobuf/wheel_odometry.pb.h>
 
-#include <synapse_tinyframe/SynapseTopics.h>
-#include <synapse_tinyframe/TinyFrame.h>
-
 class UdpClient;
 
 void udp_entry_point();
@@ -44,7 +42,7 @@ class SynapseRos : public rclcpp::Node {
 public:
     SynapseRos();
     virtual ~SynapseRos();
-    void tf_send(int topic, const std::string& data) const;
+    void udp_send(const synapse::msgs::Frame& frame) const;
     void publish_actuators(const synapse::msgs::Actuators& msg);
     void publish_odometry(const synapse::msgs::Odometry& msg);
     void publish_battery_state(const synapse::msgs::BatteryState& msg);
@@ -53,7 +51,6 @@ public:
     void publish_uptime(const synapse::msgs::Time& msg);
 
 private:
-    std::shared_ptr<TinyFrame> tf_ {};
     builtin_interfaces::msg::Time ros_clock_offset_ {};
 
     std_msgs::msg::Header compute_header(const synapse::msgs::Header& msg);

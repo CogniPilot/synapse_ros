@@ -16,7 +16,6 @@
   <depend>actuator_msgs</depend>
   <depend>sensor_msgs</depend>
   <depend>synapse_protobuf</depend>
-  <depend>synapse_tinyframe</depend>
   <depend>synapse_msgs</depend>
   <depend>geometry_msgs</depend>
 
