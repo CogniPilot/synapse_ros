@@ -1,9 +1,9 @@
-#include <synapse_protobuf/frame.pb.h>
-#include <synapse_protobuf/nav_sat_fix.pb.h>
+#include <synapse_pb/frame.pb.h>
+#include <synapse_pb/nav_sat_fix.pb.h>
 
-#include <synapse_protobuf/actuators.pb.h>
-#include <synapse_protobuf/odometry.pb.h>
-#include <synapse_protobuf/twist.pb.h>
+#include <synapse_pb/actuators.pb.h>
+#include <synapse_pb/odometry.pb.h>
+#include <synapse_pb/twist.pb.h>
 
 #include <boost/asio/error.hpp>
 #include <boost/system/error_code.hpp>
@@ -53,7 +53,7 @@ void UDPLink::rx_handler(const boost::system::error_code& ec, std::size_t bytes_
         const std::lock_guard<std::mutex> lock(guard_rx_buf_);
 
         // parse protobuf message
-        static synapse::msgs::Frame frame;
+        static synapse_pb::Frame frame;
         frame.Clear();
         auto stream = google::protobuf::io::CodedInputStream(rx_buf_, bytes_transferred);
         while (true) {
@@ -64,28 +64,28 @@ void UDPLink::rx_handler(const boost::system::error_code& ec, std::size_t bytes_
                 }
                 break;
             } else {
-                if (frame.msg_case() == synapse::msgs::Frame::kActuators) {
-                    if (frame.topic() == synapse::msgs::TOPIC_ACTUATORS) {
+                if (frame.msg_case() == synapse_pb::Frame::kActuators) {
+                    if (frame.topic() == synapse_pb::TOPIC_ACTUATORS) {
                         ros_->publish_actuators(frame.actuators());
                     }
-                } else if (frame.msg_case() == synapse::msgs::Frame::kOdometry) {
-                    if (frame.topic() == synapse::msgs::TOPIC_ODOMETRY) {
+                } else if (frame.msg_case() == synapse_pb::Frame::kOdometry) {
+                    if (frame.topic() == synapse_pb::TOPIC_ODOMETRY) {
                         ros_->publish_odometry(frame.odometry());
                     }
-                } else if (frame.msg_case() == synapse::msgs::Frame::kTwist) {
-                    if (frame.topic() == synapse::msgs::TOPIC_CMD_VEL) {
+                } else if (frame.msg_case() == synapse_pb::Frame::kTwist) {
+                    if (frame.topic() == synapse_pb::TOPIC_CMD_VEL) {
                         ros_->publish_odometry(frame.odometry());
                     }
-                } else if (frame.msg_case() == synapse::msgs::Frame::kNavSatFix) {
-                    if (frame.topic() == synapse::msgs::TOPIC_NAV_SAT_FIX) {
+                } else if (frame.msg_case() == synapse_pb::Frame::kNavSatFix) {
+                    if (frame.topic() == synapse_pb::TOPIC_NAV_SAT_FIX) {
                         ros_->publish_nav_sat_fix(frame.nav_sat_fix());
                     }
-                } else if (frame.msg_case() == synapse::msgs::Frame::kStatus) {
-                    if (frame.topic() == synapse::msgs::TOPIC_STATUS) {
+                } else if (frame.msg_case() == synapse_pb::Frame::kStatus) {
+                    if (frame.topic() == synapse_pb::TOPIC_STATUS) {
                         ros_->publish_status(frame.status());
                     }
-                } else if (frame.msg_case() == synapse::msgs::Frame::kTime) {
-                    if (frame.topic() == synapse::msgs::TOPIC_UPTIME) {
+                } else if (frame.msg_case() == synapse_pb::Frame::kTime) {
+                    if (frame.topic() == synapse_pb::TOPIC_UPTIME) {
                         ros_->publish_uptime(frame.time());
                     }
                 } else {

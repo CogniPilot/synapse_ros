@@ -4,7 +4,7 @@
 #include <boost/asio.hpp>
 #include <boost/asio/signal_set.hpp>
 #include <boost/date_time/posix_time/posix_time_config.hpp>
-#include <synapse_protobuf/actuators.pb.h>
+#include <synapse_pb/actuators.pb.h>
 
 class SynapseRos;
 

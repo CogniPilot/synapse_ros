@@ -12,7 +12,7 @@ find_package(actuator_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(builtin_interfaces REQUIRED)
 find_package(sensor_msgs REQUIRED)
-find_package(synapse_protobuf REQUIRED)
+find_package(synapse_pb REQUIRED)
 find_package(synapse_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 
@@ -22,7 +22,7 @@ add_executable(${PROJECT_NAME}
   )
 
 ament_target_dependencies(${PROJECT_NAME}
-  synapse_protobuf sensor_msgs actuator_msgs rclcpp nav_msgs builtin_interfaces synapse_msgs geometry_msgs)
+  synapse_pb sensor_msgs actuator_msgs rclcpp nav_msgs builtin_interfaces synapse_msgs geometry_msgs)
 
 #==========================================================
 # install

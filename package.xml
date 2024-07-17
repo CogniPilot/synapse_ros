@@ -15,7 +15,7 @@
   <depend>rclcpp</depend>
   <depend>actuator_msgs</depend>
   <depend>sensor_msgs</depend>
-  <depend>synapse_protobuf</depend>
+  <depend>synapse_pb</depend>
   <depend>synapse_msgs</depend>
   <depend>geometry_msgs</depend>
 
