@@ -20,19 +20,19 @@
 #include <synapse_msgs/msg/input.hpp>
 #include <synapse_msgs/msg/status.hpp>
 
-#include <synapse_protobuf/actuators.pb.h>
-#include <synapse_protobuf/battery_state.pb.h>
-#include <synapse_protobuf/bezier_trajectory.pb.h>
-#include <synapse_protobuf/frame.pb.h>
-#include <synapse_protobuf/header.pb.h>
-#include <synapse_protobuf/imu.pb.h>
-#include <synapse_protobuf/magnetic_field.pb.h>
-#include <synapse_protobuf/nav_sat_fix.pb.h>
-#include <synapse_protobuf/odometry.pb.h>
-#include <synapse_protobuf/status.pb.h>
-#include <synapse_protobuf/time.pb.h>
-#include <synapse_protobuf/twist.pb.h>
-#include <synapse_protobuf/wheel_odometry.pb.h>
+#include <synapse_pb/actuators.pb.h>
+#include <synapse_pb/battery_state.pb.h>
+#include <synapse_pb/bezier_trajectory.pb.h>
+#include <synapse_pb/frame.pb.h>
+#include <synapse_pb/header.pb.h>
+#include <synapse_pb/imu.pb.h>
+#include <synapse_pb/magnetic_field.pb.h>
+#include <synapse_pb/nav_sat_fix.pb.h>
+#include <synapse_pb/odometry.pb.h>
+#include <synapse_pb/status.pb.h>
+#include <synapse_pb/time.pb.h>
+#include <synapse_pb/twist.pb.h>
+#include <synapse_pb/wheel_odometry.pb.h>
 
 class UdpClient;
 
@@ -42,18 +42,18 @@ class SynapseRos : public rclcpp::Node {
 public:
     SynapseRos();
     virtual ~SynapseRos();
-    void udp_send(const synapse::msgs::Frame& frame) const;
-    void publish_actuators(const synapse::msgs::Actuators& msg);
-    void publish_odometry(const synapse::msgs::Odometry& msg);
-    void publish_battery_state(const synapse::msgs::BatteryState& msg);
-    void publish_nav_sat_fix(const synapse::msgs::NavSatFix& msg);
-    void publish_status(const synapse::msgs::Status& msg);
-    void publish_uptime(const synapse::msgs::Time& msg);
+    void udp_send(const synapse_pb::Frame& frame) const;
+    void publish_actuators(const synapse_pb::Actuators& msg);
+    void publish_odometry(const synapse_pb::Odometry& msg);
+    void publish_battery_state(const synapse_pb::BatteryState& msg);
+    void publish_nav_sat_fix(const synapse_pb::NavSatFix& msg);
+    void publish_status(const synapse_pb::Status& msg);
+    void publish_uptime(const synapse_pb::Time& msg);
 
 private:
     builtin_interfaces::msg::Time ros_clock_offset_ {};
 
-    std_msgs::msg::Header compute_header(const synapse::msgs::Header& msg);
+    std_msgs::msg::Header compute_header(const synapse_pb::Header& msg);
 
     // subscriptions ros -> cerebri
     rclcpp::Subscription<actuator_msgs::msg::Actuators>::SharedPtr sub_actuators_;

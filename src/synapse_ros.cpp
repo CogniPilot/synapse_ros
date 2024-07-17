@@ -6,12 +6,12 @@
 #include <sensor_msgs/msg/detail/joint_state__struct.hpp>
 #include <sensor_msgs/msg/detail/magnetic_field__struct.hpp>
 #include <sensor_msgs/msg/detail/nav_sat_fix__struct.hpp>
-#include <synapse_protobuf/battery_state.pb.h>
-#include <synapse_protobuf/frame.pb.h>
-#include <synapse_protobuf/input.pb.h>
-#include <synapse_protobuf/magnetic_field.pb.h>
-#include <synapse_protobuf/nav_sat_fix.pb.h>
-#include <synapse_protobuf/wheel_odometry.pb.h>
+#include <synapse_pb/battery_state.pb.h>
+#include <synapse_pb/frame.pb.h>
+#include <synapse_pb/input.pb.h>
+#include <synapse_pb/magnetic_field.pb.h>
+#include <synapse_pb/nav_sat_fix.pb.h>
+#include <synapse_pb/wheel_odometry.pb.h>
 
 using namespace google::protobuf::util;
 
@@ -94,7 +94,7 @@ SynapseRos::~SynapseRos()
     udp_thread_->join();
 }
 
-std_msgs::msg::Header SynapseRos::compute_header(const synapse::msgs::Header& msg)
+std_msgs::msg::Header SynapseRos::compute_header(const synapse_pb::Header& msg)
 {
     std_msgs::msg::Header ros_msg;
     ros_msg.frame_id = msg.frame_id();
@@ -110,7 +110,7 @@ std_msgs::msg::Header SynapseRos::compute_header(const synapse::msgs::Header& ms
     return ros_msg;
 }
 
-void SynapseRos::publish_actuators(const synapse::msgs::Actuators& msg)
+void SynapseRos::publish_actuators(const synapse_pb::Actuators& msg)
 {
     actuator_msgs::msg::Actuators ros_msg;
 
@@ -135,7 +135,7 @@ void SynapseRos::publish_actuators(const synapse::msgs::Actuators& msg)
     pub_actuators_->publish(ros_msg);
 }
 
-void SynapseRos::publish_odometry(const synapse::msgs::Odometry& msg)
+void SynapseRos::publish_odometry(const synapse_pb::Odometry& msg)
 {
     nav_msgs::msg::Odometry ros_msg;
 
@@ -167,7 +167,7 @@ void SynapseRos::publish_odometry(const synapse::msgs::Odometry& msg)
     pub_odometry_->publish(ros_msg);
 }
 
-void SynapseRos::publish_battery_state(const synapse::msgs::BatteryState& msg)
+void SynapseRos::publish_battery_state(const synapse_pb::BatteryState& msg)
 {
     sensor_msgs::msg::BatteryState ros_msg;
 
@@ -180,7 +180,7 @@ void SynapseRos::publish_battery_state(const synapse::msgs::BatteryState& msg)
     pub_battery_state_->publish(ros_msg);
 }
 
-void SynapseRos::publish_status(const synapse::msgs::Status& msg)
+void SynapseRos::publish_status(const synapse_pb::Status& msg)
 {
     synapse_msgs::msg::Status ros_msg;
 
@@ -207,7 +207,7 @@ void SynapseRos::publish_status(const synapse::msgs::Status& msg)
     pub_status_->publish(ros_msg);
 }
 
-void SynapseRos::publish_nav_sat_fix(const synapse::msgs::NavSatFix& msg)
+void SynapseRos::publish_nav_sat_fix(const synapse_pb::NavSatFix& msg)
 {
     sensor_msgs::msg::NavSatFix ros_msg;
 
@@ -223,7 +223,7 @@ void SynapseRos::publish_nav_sat_fix(const synapse::msgs::NavSatFix& msg)
     pub_nav_sat_fix_->publish(ros_msg);
 }
 
-void SynapseRos::publish_uptime(const synapse::msgs::Time& msg)
+void SynapseRos::publish_uptime(const synapse_pb::Time& msg)
 {
     builtin_interfaces::msg::Time ros_uptime;
     rclcpp::Time now = get_clock()->now();
@@ -243,7 +243,7 @@ void SynapseRos::publish_uptime(const synapse::msgs::Time& msg)
 
 void SynapseRos::actuators_callback(const actuator_msgs::msg::Actuators& msg) const
 {
-    synapse::msgs::Actuators syn_msg;
+    synapse_pb::Actuators syn_msg;
 
     // header
     syn_msg.mutable_header()->set_frame_id(msg.header.frame_id);
@@ -263,8 +263,8 @@ void SynapseRos::actuators_callback(const actuator_msgs::msg::Actuators& msg) co
     }
 
     // serialize message
-    synapse::msgs::Frame frame {};
-    frame.set_topic(synapse::msgs::Topic::TOPIC_ACTUATORS);
+    synapse_pb::Frame frame {};
+    frame.set_topic(synapse_pb::Topic::TOPIC_ACTUATORS);
     frame.set_allocated_actuators(&syn_msg);
     udp_send(frame);
     frame.release_actuators();
@@ -272,7 +272,7 @@ void SynapseRos::actuators_callback(const actuator_msgs::msg::Actuators& msg) co
 
 void SynapseRos::bezier_trajectory_callback(const synapse_msgs::msg::BezierTrajectory& msg) const
 {
-    synapse::msgs::BezierTrajectory syn_msg;
+    synapse_pb::BezierTrajectory syn_msg;
 
     syn_msg.set_time_start(msg.time_start);
 
@@ -282,7 +282,7 @@ void SynapseRos::bezier_trajectory_callback(const synapse_msgs::msg::BezierTraje
     syn_msg.mutable_header()->mutable_stamp()->set_nanosec(msg.header.stamp.nanosec);
 
     for (auto i = 0u; i < msg.curves.size(); ++i) {
-        synapse::msgs::BezierCurve* curve = syn_msg.add_curves();
+        synapse_pb::BezierCurve* curve = syn_msg.add_curves();
 
         curve->set_time_stop(msg.curves[i].time_stop);
 
@@ -304,8 +304,8 @@ void SynapseRos::bezier_trajectory_callback(const synapse_msgs::msg::BezierTraje
     }
 
     // serialize message
-    synapse::msgs::Frame frame {};
-    frame.set_topic(synapse::msgs::Topic::TOPIC_BEZIER_TRAJECTORY);
+    synapse_pb::Frame frame {};
+    frame.set_topic(synapse_pb::Topic::TOPIC_BEZIER_TRAJECTORY);
     frame.set_allocated_bezier_trajectory(&syn_msg);
     udp_send(frame);
     frame.release_bezier_trajectory();
@@ -313,7 +313,7 @@ void SynapseRos::bezier_trajectory_callback(const synapse_msgs::msg::BezierTraje
 
 void SynapseRos::cmd_vel_callback(const geometry_msgs::msg::Twist& msg) const
 {
-    synapse::msgs::Twist syn_msg;
+    synapse_pb::Twist syn_msg;
 
     // twist
     syn_msg.mutable_linear()->set_x(msg.linear.x);
@@ -324,8 +324,8 @@ void SynapseRos::cmd_vel_callback(const geometry_msgs::msg::Twist& msg) const
     syn_msg.mutable_angular()->set_z(msg.angular.z);
 
     // serialize message
-    synapse::msgs::Frame frame {};
-    frame.set_topic(synapse::msgs::Topic::TOPIC_CMD_VEL);
+    synapse_pb::Frame frame {};
+    frame.set_topic(synapse_pb::Topic::TOPIC_CMD_VEL);
     frame.set_allocated_twist(&syn_msg);
     udp_send(frame);
     frame.release_twist();
@@ -333,14 +333,14 @@ void SynapseRos::cmd_vel_callback(const geometry_msgs::msg::Twist& msg) const
 
 void SynapseRos::input_callback(const synapse_msgs::msg::Input& msg) const
 {
-    synapse::msgs::Input syn_msg;
+    synapse_pb::Input syn_msg;
     for (auto i = 0u; i < msg.channel.size(); ++i) {
         syn_msg.add_channel(msg.channel[i]);
     }
 
     // serialize message
-    synapse::msgs::Frame frame {};
-    frame.set_topic(synapse::msgs::Topic::TOPIC_INPUT);
+    synapse_pb::Frame frame {};
+    frame.set_topic(synapse_pb::Topic::TOPIC_INPUT);
     frame.set_allocated_input(&syn_msg);
     udp_send(frame);
     frame.release_input();
@@ -349,7 +349,7 @@ void SynapseRos::input_callback(const synapse_msgs::msg::Input& msg) const
 void SynapseRos::odometry_callback(const nav_msgs::msg::Odometry& msg) const
 {
     // construct empty syn_msg
-    synapse::msgs::Odometry syn_msg {};
+    synapse_pb::Odometry syn_msg {};
 
     // child frame
     syn_msg.set_child_frame_id(msg.child_frame_id);
@@ -379,8 +379,8 @@ void SynapseRos::odometry_callback(const nav_msgs::msg::Odometry& msg) const
     // skipping covariance
 
     // serialize message
-    synapse::msgs::Frame frame {};
-    frame.set_topic(synapse::msgs::Topic::TOPIC_ODOMETRY);
+    synapse_pb::Frame frame {};
+    frame.set_topic(synapse_pb::Topic::TOPIC_ODOMETRY);
     frame.set_allocated_odometry(&syn_msg);
     udp_send(frame);
     frame.release_odometry();
@@ -389,7 +389,7 @@ void SynapseRos::odometry_callback(const nav_msgs::msg::Odometry& msg) const
 void SynapseRos::imu_callback(const sensor_msgs::msg::Imu& msg) const
 {
     // construct empty syn_msg
-    synapse::msgs::Imu syn_msg {};
+    synapse_pb::Imu syn_msg {};
 
     // header
     syn_msg.mutable_header()->set_frame_id(msg.header.frame_id);
@@ -405,8 +405,8 @@ void SynapseRos::imu_callback(const sensor_msgs::msg::Imu& msg) const
     syn_msg.mutable_angular_velocity()->set_z(msg.angular_velocity.z);
 
     // serialize message
-    synapse::msgs::Frame frame {};
-    frame.set_topic(synapse::msgs::Topic::TOPIC_WHEEL_ODOMETRY);
+    synapse_pb::Frame frame {};
+    frame.set_topic(synapse_pb::Topic::TOPIC_WHEEL_ODOMETRY);
     frame.set_allocated_imu(&syn_msg);
     udp_send(frame);
     frame.release_imu();
@@ -415,7 +415,7 @@ void SynapseRos::imu_callback(const sensor_msgs::msg::Imu& msg) const
 void SynapseRos::wheel_odometry_callback(const sensor_msgs::msg::JointState& msg) const
 {
     // construct empty syn_msg
-    synapse::msgs::WheelOdometry syn_msg {};
+    synapse_pb::WheelOdometry syn_msg {};
 
     // header
     syn_msg.mutable_header()->set_frame_id(msg.header.frame_id);
@@ -431,8 +431,8 @@ void SynapseRos::wheel_odometry_callback(const sensor_msgs::msg::JointState& msg
     syn_msg.set_rotation(rotation);
 
     // serialize message
-    synapse::msgs::Frame frame {};
-    frame.set_topic(synapse::msgs::Topic::TOPIC_WHEEL_ODOMETRY);
+    synapse_pb::Frame frame {};
+    frame.set_topic(synapse_pb::Topic::TOPIC_WHEEL_ODOMETRY);
     frame.set_allocated_wheel_odometry(&syn_msg);
     udp_send(frame);
     frame.release_wheel_odometry();
@@ -441,14 +441,14 @@ void SynapseRos::wheel_odometry_callback(const sensor_msgs::msg::JointState& msg
 void SynapseRos::clock_offset_callback(const builtin_interfaces::msg::Time& msg) const
 {
     // construct empty syn_msg
-    synapse::msgs::Time syn_msg {};
+    synapse_pb::Time syn_msg {};
 
     syn_msg.set_sec(msg.sec);
     syn_msg.set_nanosec(msg.nanosec);
 
     // serialize message
-    synapse::msgs::Frame frame {};
-    frame.set_topic(synapse::msgs::Topic::TOPIC_CLOCK_OFFSET);
+    synapse_pb::Frame frame {};
+    frame.set_topic(synapse_pb::Topic::TOPIC_CLOCK_OFFSET);
     frame.set_allocated_time(&syn_msg);
     udp_send(frame);
     frame.release_time();
@@ -457,7 +457,7 @@ void SynapseRos::clock_offset_callback(const builtin_interfaces::msg::Time& msg)
 void SynapseRos::battery_state_callback(const sensor_msgs::msg::BatteryState& msg) const
 {
     // construct empty syn_msg
-    synapse::msgs::BatteryState syn_msg {};
+    synapse_pb::BatteryState syn_msg {};
 
     // header
     syn_msg.mutable_header()->set_frame_id(msg.header.frame_id);
@@ -467,8 +467,8 @@ void SynapseRos::battery_state_callback(const sensor_msgs::msg::BatteryState& ms
     syn_msg.set_voltage(msg.voltage);
 
     // serialize message
-    synapse::msgs::Frame frame {};
-    frame.set_topic(synapse::msgs::Topic::TOPIC_BATTERY_STATE);
+    synapse_pb::Frame frame {};
+    frame.set_topic(synapse_pb::Topic::TOPIC_BATTERY_STATE);
     frame.set_allocated_battery_state(&syn_msg);
     udp_send(frame);
     frame.release_battery_state();
@@ -477,7 +477,7 @@ void SynapseRos::battery_state_callback(const sensor_msgs::msg::BatteryState& ms
 void SynapseRos::magnetic_field_callback(const sensor_msgs::msg::MagneticField& msg) const
 {
     // construct empty syn_msg
-    synapse::msgs::MagneticField syn_msg {};
+    synapse_pb::MagneticField syn_msg {};
 
     // header
     syn_msg.mutable_header()->set_frame_id(msg.header.frame_id);
@@ -489,8 +489,8 @@ void SynapseRos::magnetic_field_callback(const sensor_msgs::msg::MagneticField& 
     syn_msg.mutable_magnetic_field()->set_z(msg.magnetic_field.z);
 
     // serialize message
-    synapse::msgs::Frame frame {};
-    frame.set_topic(synapse::msgs::Topic::TOPIC_NAV_SAT_FIX);
+    synapse_pb::Frame frame {};
+    frame.set_topic(synapse_pb::Topic::TOPIC_NAV_SAT_FIX);
     frame.set_allocated_magnetic_field(&syn_msg);
     udp_send(frame);
     frame.release_magnetic_field();
@@ -499,7 +499,7 @@ void SynapseRos::magnetic_field_callback(const sensor_msgs::msg::MagneticField& 
 void SynapseRos::nav_sat_fix_callback(const sensor_msgs::msg::NavSatFix& msg) const
 {
     // construct empty syn_msg
-    synapse::msgs::NavSatFix syn_msg {};
+    synapse_pb::NavSatFix syn_msg {};
 
     // header
     syn_msg.mutable_header()->set_frame_id(msg.header.frame_id);
@@ -511,14 +511,14 @@ void SynapseRos::nav_sat_fix_callback(const sensor_msgs::msg::NavSatFix& msg) co
     syn_msg.set_altitude(msg.altitude);
 
     // serialize message
-    synapse::msgs::Frame frame {};
-    frame.set_topic(synapse::msgs::Topic::TOPIC_NAV_SAT_FIX);
+    synapse_pb::Frame frame {};
+    frame.set_topic(synapse_pb::Topic::TOPIC_NAV_SAT_FIX);
     frame.set_allocated_nav_sat_fix(&syn_msg);
     udp_send(frame);
     frame.release_nav_sat_fix();
 }
 
-void SynapseRos::udp_send(const synapse::msgs::Frame& frame) const
+void SynapseRos::udp_send(const synapse_pb::Frame& frame) const
 {
     std::stringstream stream;
     if (!SerializeDelimitedToOstream(frame, &stream)) {
