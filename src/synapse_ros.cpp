@@ -264,7 +264,6 @@ void SynapseRos::actuators_callback(const actuator_msgs::msg::Actuators& msg) co
 
     // serialize message
     synapse_pb::Frame frame {};
-    frame.set_topic(synapse_pb::Topic::TOPIC_ACTUATORS);
     frame.set_allocated_actuators(&syn_msg);
     udp_send(frame);
     frame.release_actuators();
@@ -305,7 +304,6 @@ void SynapseRos::bezier_trajectory_callback(const synapse_msgs::msg::BezierTraje
 
     // serialize message
     synapse_pb::Frame frame {};
-    frame.set_topic(synapse_pb::Topic::TOPIC_BEZIER_TRAJECTORY);
     frame.set_allocated_bezier_trajectory(&syn_msg);
     udp_send(frame);
     frame.release_bezier_trajectory();
@@ -325,10 +323,9 @@ void SynapseRos::cmd_vel_callback(const geometry_msgs::msg::Twist& msg) const
 
     // serialize message
     synapse_pb::Frame frame {};
-    frame.set_topic(synapse_pb::Topic::TOPIC_CMD_VEL);
-    frame.set_allocated_twist(&syn_msg);
+    frame.set_allocated_cmd_vel(&syn_msg);
     udp_send(frame);
-    frame.release_twist();
+    frame.release_cmd_vel();
 }
 
 void SynapseRos::input_callback(const synapse_msgs::msg::Input& msg) const
@@ -340,7 +337,6 @@ void SynapseRos::input_callback(const synapse_msgs::msg::Input& msg) const
 
     // serialize message
     synapse_pb::Frame frame {};
-    frame.set_topic(synapse_pb::Topic::TOPIC_INPUT);
     frame.set_allocated_input(&syn_msg);
     udp_send(frame);
     frame.release_input();
@@ -380,7 +376,6 @@ void SynapseRos::odometry_callback(const nav_msgs::msg::Odometry& msg) const
 
     // serialize message
     synapse_pb::Frame frame {};
-    frame.set_topic(synapse_pb::Topic::TOPIC_ODOMETRY);
     frame.set_allocated_odometry(&syn_msg);
     udp_send(frame);
     frame.release_odometry();
@@ -406,7 +401,6 @@ void SynapseRos::imu_callback(const sensor_msgs::msg::Imu& msg) const
 
     // serialize message
     synapse_pb::Frame frame {};
-    frame.set_topic(synapse_pb::Topic::TOPIC_WHEEL_ODOMETRY);
     frame.set_allocated_imu(&syn_msg);
     udp_send(frame);
     frame.release_imu();
@@ -432,7 +426,6 @@ void SynapseRos::wheel_odometry_callback(const sensor_msgs::msg::JointState& msg
 
     // serialize message
     synapse_pb::Frame frame {};
-    frame.set_topic(synapse_pb::Topic::TOPIC_WHEEL_ODOMETRY);
     frame.set_allocated_wheel_odometry(&syn_msg);
     udp_send(frame);
     frame.release_wheel_odometry();
@@ -448,10 +441,9 @@ void SynapseRos::clock_offset_callback(const builtin_interfaces::msg::Time& msg)
 
     // serialize message
     synapse_pb::Frame frame {};
-    frame.set_topic(synapse_pb::Topic::TOPIC_CLOCK_OFFSET);
-    frame.set_allocated_time(&syn_msg);
+    frame.set_allocated_clock_offset(&syn_msg);
     udp_send(frame);
-    frame.release_time();
+    frame.release_clock_offset();
 }
 
 void SynapseRos::battery_state_callback(const sensor_msgs::msg::BatteryState& msg) const
@@ -468,7 +460,6 @@ void SynapseRos::battery_state_callback(const sensor_msgs::msg::BatteryState& ms
 
     // serialize message
     synapse_pb::Frame frame {};
-    frame.set_topic(synapse_pb::Topic::TOPIC_BATTERY_STATE);
     frame.set_allocated_battery_state(&syn_msg);
     udp_send(frame);
     frame.release_battery_state();
@@ -490,7 +481,6 @@ void SynapseRos::magnetic_field_callback(const sensor_msgs::msg::MagneticField& 
 
     // serialize message
     synapse_pb::Frame frame {};
-    frame.set_topic(synapse_pb::Topic::TOPIC_NAV_SAT_FIX);
     frame.set_allocated_magnetic_field(&syn_msg);
     udp_send(frame);
     frame.release_magnetic_field();
@@ -512,7 +502,6 @@ void SynapseRos::nav_sat_fix_callback(const sensor_msgs::msg::NavSatFix& msg) co
 
     // serialize message
     synapse_pb::Frame frame {};
-    frame.set_topic(synapse_pb::Topic::TOPIC_NAV_SAT_FIX);
     frame.set_allocated_nav_sat_fix(&syn_msg);
     udp_send(frame);
     frame.release_nav_sat_fix();
@@ -522,7 +511,7 @@ void SynapseRos::udp_send(const synapse_pb::Frame& frame) const
 {
     std::stringstream stream;
     if (!SerializeDelimitedToOstream(frame, &stream)) {
-        std::cerr << "Failed to serialize " << frame.topic() << std::endl;
+        std::cerr << "Failed to serialize " << frame.msg_case() << std::endl;
         return;
     }
     if (g_udp_link != nullptr) {
