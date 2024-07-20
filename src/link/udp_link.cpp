@@ -65,29 +65,15 @@ void UDPLink::rx_handler(const boost::system::error_code& ec, std::size_t bytes_
                 break;
             } else {
                 if (frame.msg_case() == synapse_pb::Frame::kActuators) {
-                    if (frame.topic() == synapse_pb::TOPIC_ACTUATORS) {
-                        ros_->publish_actuators(frame.actuators());
-                    }
+                    ros_->publish_actuators(frame.actuators());
                 } else if (frame.msg_case() == synapse_pb::Frame::kOdometry) {
-                    if (frame.topic() == synapse_pb::TOPIC_ODOMETRY) {
-                        ros_->publish_odometry(frame.odometry());
-                    }
-                } else if (frame.msg_case() == synapse_pb::Frame::kTwist) {
-                    if (frame.topic() == synapse_pb::TOPIC_CMD_VEL) {
-                        ros_->publish_odometry(frame.odometry());
-                    }
+                    ros_->publish_odometry(frame.odometry());
                 } else if (frame.msg_case() == synapse_pb::Frame::kNavSatFix) {
-                    if (frame.topic() == synapse_pb::TOPIC_NAV_SAT_FIX) {
-                        ros_->publish_nav_sat_fix(frame.nav_sat_fix());
-                    }
+                    ros_->publish_nav_sat_fix(frame.nav_sat_fix());
                 } else if (frame.msg_case() == synapse_pb::Frame::kStatus) {
-                    if (frame.topic() == synapse_pb::TOPIC_STATUS) {
-                        ros_->publish_status(frame.status());
-                    }
-                } else if (frame.msg_case() == synapse_pb::Frame::kTime) {
-                    if (frame.topic() == synapse_pb::TOPIC_UPTIME) {
-                        ros_->publish_uptime(frame.time());
-                    }
+                    ros_->publish_status(frame.status());
+                } else if (frame.msg_case() == synapse_pb::Frame::kUptime) {
+                    ros_->publish_uptime(frame.uptime());
                 } else {
                     std::cerr << "unhandled message case" << frame.msg_case() << std::endl;
                     break;
