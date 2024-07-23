@@ -7,6 +7,8 @@
 #include <sensor_msgs/msg/detail/magnetic_field__struct.hpp>
 #include <sensor_msgs/msg/detail/nav_sat_fix__struct.hpp>
 #include <synapse_pb/battery_state.pb.h>
+#include <synapse_pb/bezier_trajectory.pb.h>
+#include <synapse_pb/clock_offset.pb.h>
 #include <synapse_pb/frame.pb.h>
 #include <synapse_pb/input.pb.h>
 #include <synapse_pb/magnetic_field.pb.h>
@@ -94,20 +96,17 @@ SynapseRos::~SynapseRos()
     udp_thread_->join();
 }
 
-std_msgs::msg::Header SynapseRos::compute_header(const synapse_pb::Header& msg)
+builtin_interfaces::msg::Time SynapseRos::compute_stamp(const synapse_pb::Timestamp& msg)
 {
-    std_msgs::msg::Header ros_msg;
-    ros_msg.frame_id = msg.frame_id();
-    if (msg.has_stamp()) {
-        int64_t sec = msg.stamp().sec() + ros_clock_offset_.sec;
-        int64_t nanos = msg.stamp().nanosec() + ros_clock_offset_.nanosec;
-        int extra_sec = nanos / 1e9;
-        nanos -= extra_sec * 1e9;
-        sec += extra_sec;
-        ros_msg.stamp.sec = sec;
-        ros_msg.stamp.nanosec = nanos;
-    }
-    return ros_msg;
+    builtin_interfaces::msg::Time time;
+    int64_t sec = msg.seconds() + ros_clock_offset_.sec;
+    int64_t nanos = msg.nanos() + ros_clock_offset_.nanosec;
+    int extra_sec = nanos / 1e9;
+    nanos -= extra_sec * 1e9;
+    sec += extra_sec;
+    time.sec = sec;
+    time.nanosec = nanos;
+    return time;
 }
 
 void SynapseRos::publish_actuators(const synapse_pb::Actuators& msg)
@@ -115,8 +114,8 @@ void SynapseRos::publish_actuators(const synapse_pb::Actuators& msg)
     actuator_msgs::msg::Actuators ros_msg;
 
     // header
-    if (msg.has_header()) {
-        ros_msg.header = compute_header(msg.header());
+    if (msg.has_stamp()) {
+        ros_msg.header.stamp = compute_stamp(msg.stamp());
     }
 
     // actuators
@@ -140,29 +139,30 @@ void SynapseRos::publish_odometry(const synapse_pb::Odometry& msg)
     nav_msgs::msg::Odometry ros_msg;
 
     // header
-    if (msg.has_header()) {
-        ros_msg.header = compute_header(msg.header());
+    if (msg.has_stamp()) {
+        ros_msg.header.stamp = compute_stamp(msg.stamp());
     }
+    ros_msg.header.frame_id = msg.frame_id();
 
     // child frame id
     ros_msg.child_frame_id = msg.child_frame_id();
 
     // pose
-    ros_msg.pose.pose.position.x = msg.pose().pose().position().x();
-    ros_msg.pose.pose.position.y = msg.pose().pose().position().y();
-    ros_msg.pose.pose.position.z = msg.pose().pose().position().z();
-    ros_msg.pose.pose.orientation.x = msg.pose().pose().orientation().x();
-    ros_msg.pose.pose.orientation.y = msg.pose().pose().orientation().y();
-    ros_msg.pose.pose.orientation.z = msg.pose().pose().orientation().z();
-    ros_msg.pose.pose.orientation.w = msg.pose().pose().orientation().w();
+    ros_msg.pose.pose.position.x = msg.pose().position().x();
+    ros_msg.pose.pose.position.y = msg.pose().position().y();
+    ros_msg.pose.pose.position.z = msg.pose().position().z();
+    ros_msg.pose.pose.orientation.x = msg.pose().orientation().x();
+    ros_msg.pose.pose.orientation.y = msg.pose().orientation().y();
+    ros_msg.pose.pose.orientation.z = msg.pose().orientation().z();
+    ros_msg.pose.pose.orientation.w = msg.pose().orientation().w();
 
     // twist
-    ros_msg.twist.twist.linear.x = msg.twist().twist().linear().x();
-    ros_msg.twist.twist.linear.y = msg.twist().twist().linear().y();
-    ros_msg.twist.twist.linear.z = msg.twist().twist().linear().z();
-    ros_msg.twist.twist.angular.x = msg.twist().twist().angular().x();
-    ros_msg.twist.twist.angular.y = msg.twist().twist().angular().y();
-    ros_msg.twist.twist.angular.z = msg.twist().twist().angular().z();
+    ros_msg.twist.twist.linear.x = msg.twist().linear().x();
+    ros_msg.twist.twist.linear.y = msg.twist().linear().y();
+    ros_msg.twist.twist.linear.z = msg.twist().linear().z();
+    ros_msg.twist.twist.angular.x = msg.twist().angular().x();
+    ros_msg.twist.twist.angular.y = msg.twist().angular().y();
+    ros_msg.twist.twist.angular.z = msg.twist().angular().z();
 
     pub_odometry_->publish(ros_msg);
 }
@@ -172,8 +172,8 @@ void SynapseRos::publish_battery_state(const synapse_pb::BatteryState& msg)
     sensor_msgs::msg::BatteryState ros_msg;
 
     // header
-    if (msg.has_header()) {
-        ros_msg.header = compute_header(msg.header());
+    if (msg.has_stamp()) {
+        ros_msg.header.stamp = compute_stamp(msg.stamp());
     }
 
     ros_msg.voltage = msg.voltage();
@@ -185,8 +185,8 @@ void SynapseRos::publish_status(const synapse_pb::Status& msg)
     synapse_msgs::msg::Status ros_msg;
 
     // header
-    if (msg.has_header()) {
-        ros_msg.header = compute_header(msg.header());
+    if (msg.has_stamp()) {
+        ros_msg.header.stamp = compute_stamp(msg.stamp());
     }
 
     ros_msg.arming = msg.arming();
@@ -212,8 +212,8 @@ void SynapseRos::publish_nav_sat_fix(const synapse_pb::NavSatFix& msg)
     sensor_msgs::msg::NavSatFix ros_msg;
 
     // header
-    if (msg.has_header()) {
-        ros_msg.header = compute_header(msg.header());
+    if (msg.has_stamp()) {
+        ros_msg.header.stamp = compute_stamp(msg.stamp());
     }
 
     ros_msg.latitude = msg.latitude();
@@ -223,16 +223,16 @@ void SynapseRos::publish_nav_sat_fix(const synapse_pb::NavSatFix& msg)
     pub_nav_sat_fix_->publish(ros_msg);
 }
 
-void SynapseRos::publish_uptime(const synapse_pb::Time& msg)
+void SynapseRos::publish_uptime(const synapse_pb::Uptime& msg)
 {
     builtin_interfaces::msg::Time ros_uptime;
     rclcpp::Time now = get_clock()->now();
 
-    int64_t uptime_nanos = msg.sec() * 1e9 + msg.nanosec();
+    int64_t uptime_nanos = msg.uptime().seconds() * 1e9 + msg.uptime().nanos();
     int64_t clock_offset_nanos = now.nanoseconds() - uptime_nanos;
 
-    ros_uptime.sec = msg.sec();
-    ros_uptime.nanosec = msg.nanosec();
+    ros_uptime.sec = msg.uptime().seconds();
+    ros_uptime.nanosec = msg.uptime().nanos();
 
     ros_clock_offset_.sec = clock_offset_nanos / 1e9;
     ros_clock_offset_.nanosec = clock_offset_nanos - ros_clock_offset_.sec * 1e9;
@@ -246,9 +246,8 @@ void SynapseRos::actuators_callback(const actuator_msgs::msg::Actuators& msg) co
     synapse_pb::Actuators syn_msg;
 
     // header
-    syn_msg.mutable_header()->set_frame_id(msg.header.frame_id);
-    syn_msg.mutable_header()->mutable_stamp()->set_sec(msg.header.stamp.sec);
-    syn_msg.mutable_header()->mutable_stamp()->set_nanosec(msg.header.stamp.nanosec);
+    syn_msg.mutable_stamp()->set_seconds(msg.header.stamp.sec);
+    syn_msg.mutable_stamp()->set_nanos(msg.header.stamp.nanosec);
 
     // actuators
     for (auto i = 0u; i < msg.position.size(); ++i) {
@@ -272,18 +271,17 @@ void SynapseRos::actuators_callback(const actuator_msgs::msg::Actuators& msg) co
 void SynapseRos::bezier_trajectory_callback(const synapse_msgs::msg::BezierTrajectory& msg) const
 {
     synapse_pb::BezierTrajectory syn_msg;
-
-    syn_msg.set_time_start(msg.time_start);
+    // syn_msg.set_time_start(msg.time_start);
 
     // header
-    syn_msg.mutable_header()->set_frame_id(msg.header.frame_id);
-    syn_msg.mutable_header()->mutable_stamp()->set_sec(msg.header.stamp.sec);
-    syn_msg.mutable_header()->mutable_stamp()->set_nanosec(msg.header.stamp.nanosec);
+    syn_msg.set_frame_id(msg.header.frame_id);
+    syn_msg.mutable_stamp()->set_seconds(msg.header.stamp.sec);
+    syn_msg.mutable_stamp()->set_nanos(msg.header.stamp.nanosec);
 
     for (auto i = 0u; i < msg.curves.size(); ++i) {
-        synapse_pb::BezierCurve* curve = syn_msg.add_curves();
+        synapse_pb::BezierTrajectory::Curve* curve = syn_msg.add_curves();
 
-        curve->set_time_stop(msg.curves[i].time_stop);
+        // curve->set_time_stop(msg.curves[i].time_stop);
 
         for (auto j = 0u; j < msg.curves[i].x.size(); ++j) {
             curve->add_x(msg.curves[i].x[j]);
@@ -351,27 +349,27 @@ void SynapseRos::odometry_callback(const nav_msgs::msg::Odometry& msg) const
     syn_msg.set_child_frame_id(msg.child_frame_id);
 
     // header
-    syn_msg.mutable_header()->set_frame_id(msg.header.frame_id);
-    syn_msg.mutable_header()->mutable_stamp()->set_sec(msg.header.stamp.sec);
-    syn_msg.mutable_header()->mutable_stamp()->set_nanosec(msg.header.stamp.nanosec);
+    syn_msg.set_frame_id(msg.header.frame_id);
+    syn_msg.mutable_stamp()->set_seconds(msg.header.stamp.sec);
+    syn_msg.mutable_stamp()->set_nanos(msg.header.stamp.nanosec);
 
     // pose
-    syn_msg.mutable_pose()->mutable_pose()->mutable_position()->set_x(msg.pose.pose.position.x);
-    syn_msg.mutable_pose()->mutable_pose()->mutable_position()->set_y(msg.pose.pose.position.y);
-    syn_msg.mutable_pose()->mutable_pose()->mutable_position()->set_z(msg.pose.pose.position.z);
-    syn_msg.mutable_pose()->mutable_pose()->mutable_orientation()->set_x(msg.pose.pose.orientation.x);
-    syn_msg.mutable_pose()->mutable_pose()->mutable_orientation()->set_y(msg.pose.pose.orientation.y);
-    syn_msg.mutable_pose()->mutable_pose()->mutable_orientation()->set_z(msg.pose.pose.orientation.z);
-    syn_msg.mutable_pose()->mutable_pose()->mutable_orientation()->set_w(msg.pose.pose.orientation.w);
+    syn_msg.mutable_pose()->mutable_position()->set_x(msg.pose.pose.position.x);
+    syn_msg.mutable_pose()->mutable_position()->set_y(msg.pose.pose.position.y);
+    syn_msg.mutable_pose()->mutable_position()->set_z(msg.pose.pose.position.z);
+    syn_msg.mutable_pose()->mutable_orientation()->set_x(msg.pose.pose.orientation.x);
+    syn_msg.mutable_pose()->mutable_orientation()->set_y(msg.pose.pose.orientation.y);
+    syn_msg.mutable_pose()->mutable_orientation()->set_z(msg.pose.pose.orientation.z);
+    syn_msg.mutable_pose()->mutable_orientation()->set_w(msg.pose.pose.orientation.w);
     // skipping covariance
 
     // twist
-    syn_msg.mutable_twist()->mutable_twist()->mutable_linear()->set_x(msg.twist.twist.linear.x);
-    syn_msg.mutable_twist()->mutable_twist()->mutable_linear()->set_y(msg.twist.twist.linear.y);
-    syn_msg.mutable_twist()->mutable_twist()->mutable_linear()->set_z(msg.twist.twist.linear.z);
-    syn_msg.mutable_twist()->mutable_twist()->mutable_angular()->set_x(msg.twist.twist.angular.x);
-    syn_msg.mutable_twist()->mutable_twist()->mutable_angular()->set_y(msg.twist.twist.angular.y);
-    syn_msg.mutable_twist()->mutable_twist()->mutable_angular()->set_z(msg.twist.twist.angular.z);
+    syn_msg.mutable_twist()->mutable_linear()->set_x(msg.twist.twist.linear.x);
+    syn_msg.mutable_twist()->mutable_linear()->set_y(msg.twist.twist.linear.y);
+    syn_msg.mutable_twist()->mutable_linear()->set_z(msg.twist.twist.linear.z);
+    syn_msg.mutable_twist()->mutable_angular()->set_x(msg.twist.twist.angular.x);
+    syn_msg.mutable_twist()->mutable_angular()->set_y(msg.twist.twist.angular.y);
+    syn_msg.mutable_twist()->mutable_angular()->set_z(msg.twist.twist.angular.z);
     // skipping covariance
 
     // serialize message
@@ -387,9 +385,9 @@ void SynapseRos::imu_callback(const sensor_msgs::msg::Imu& msg) const
     synapse_pb::Imu syn_msg {};
 
     // header
-    syn_msg.mutable_header()->set_frame_id(msg.header.frame_id);
-    syn_msg.mutable_header()->mutable_stamp()->set_sec(msg.header.stamp.sec);
-    syn_msg.mutable_header()->mutable_stamp()->set_nanosec(msg.header.stamp.nanosec);
+    syn_msg.set_frame_id(msg.header.frame_id);
+    syn_msg.mutable_stamp()->set_seconds(msg.header.stamp.sec);
+    syn_msg.mutable_stamp()->set_nanos(msg.header.stamp.nanosec);
 
     // construct message
     syn_msg.mutable_linear_acceleration()->set_x(msg.linear_acceleration.x);
@@ -412,9 +410,8 @@ void SynapseRos::wheel_odometry_callback(const sensor_msgs::msg::JointState& msg
     synapse_pb::WheelOdometry syn_msg {};
 
     // header
-    syn_msg.mutable_header()->set_frame_id(msg.header.frame_id);
-    syn_msg.mutable_header()->mutable_stamp()->set_sec(msg.header.stamp.sec);
-    syn_msg.mutable_header()->mutable_stamp()->set_nanosec(msg.header.stamp.nanosec);
+    syn_msg.mutable_stamp()->set_seconds(msg.header.stamp.sec);
+    syn_msg.mutable_stamp()->set_nanos(msg.header.stamp.nanosec);
 
     // construct message
     int n_wheels = msg.position.size();
@@ -434,10 +431,10 @@ void SynapseRos::wheel_odometry_callback(const sensor_msgs::msg::JointState& msg
 void SynapseRos::clock_offset_callback(const builtin_interfaces::msg::Time& msg) const
 {
     // construct empty syn_msg
-    synapse_pb::Time syn_msg {};
+    synapse_pb::ClockOffset syn_msg {};
 
-    syn_msg.set_sec(msg.sec);
-    syn_msg.set_nanosec(msg.nanosec);
+    syn_msg.mutable_offset()->set_seconds(msg.sec);
+    syn_msg.mutable_offset()->set_nanos(msg.nanosec);
 
     // serialize message
     synapse_pb::Frame frame {};
@@ -452,9 +449,8 @@ void SynapseRos::battery_state_callback(const sensor_msgs::msg::BatteryState& ms
     synapse_pb::BatteryState syn_msg {};
 
     // header
-    syn_msg.mutable_header()->set_frame_id(msg.header.frame_id);
-    syn_msg.mutable_header()->mutable_stamp()->set_sec(msg.header.stamp.sec);
-    syn_msg.mutable_header()->mutable_stamp()->set_nanosec(msg.header.stamp.nanosec);
+    syn_msg.mutable_stamp()->set_seconds(msg.header.stamp.sec);
+    syn_msg.mutable_stamp()->set_nanos(msg.header.stamp.nanosec);
 
     syn_msg.set_voltage(msg.voltage);
 
@@ -471,9 +467,9 @@ void SynapseRos::magnetic_field_callback(const sensor_msgs::msg::MagneticField& 
     synapse_pb::MagneticField syn_msg {};
 
     // header
-    syn_msg.mutable_header()->set_frame_id(msg.header.frame_id);
-    syn_msg.mutable_header()->mutable_stamp()->set_sec(msg.header.stamp.sec);
-    syn_msg.mutable_header()->mutable_stamp()->set_nanosec(msg.header.stamp.nanosec);
+    syn_msg.set_frame_id(msg.header.frame_id);
+    syn_msg.mutable_stamp()->set_seconds(msg.header.stamp.sec);
+    syn_msg.mutable_stamp()->set_nanos(msg.header.stamp.nanosec);
 
     syn_msg.mutable_magnetic_field()->set_x(msg.magnetic_field.x);
     syn_msg.mutable_magnetic_field()->set_y(msg.magnetic_field.y);
@@ -492,9 +488,8 @@ void SynapseRos::nav_sat_fix_callback(const sensor_msgs::msg::NavSatFix& msg) co
     synapse_pb::NavSatFix syn_msg {};
 
     // header
-    syn_msg.mutable_header()->set_frame_id(msg.header.frame_id);
-    syn_msg.mutable_header()->mutable_stamp()->set_sec(msg.header.stamp.sec);
-    syn_msg.mutable_header()->mutable_stamp()->set_nanosec(msg.header.stamp.nanosec);
+    syn_msg.mutable_stamp()->set_seconds(msg.header.stamp.sec);
+    syn_msg.mutable_stamp()->set_nanos(msg.header.stamp.nanosec);
 
     syn_msg.set_latitude(msg.latitude);
     syn_msg.set_longitude(msg.longitude);
