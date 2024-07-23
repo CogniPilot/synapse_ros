@@ -24,14 +24,13 @@
 #include <synapse_pb/battery_state.pb.h>
 #include <synapse_pb/bezier_trajectory.pb.h>
 #include <synapse_pb/frame.pb.h>
-#include <synapse_pb/header.pb.h>
 #include <synapse_pb/imu.pb.h>
 #include <synapse_pb/magnetic_field.pb.h>
 #include <synapse_pb/nav_sat_fix.pb.h>
 #include <synapse_pb/odometry.pb.h>
 #include <synapse_pb/status.pb.h>
-#include <synapse_pb/time.pb.h>
 #include <synapse_pb/twist.pb.h>
+#include <synapse_pb/uptime.pb.h>
 #include <synapse_pb/wheel_odometry.pb.h>
 
 class UdpClient;
@@ -48,12 +47,11 @@ public:
     void publish_battery_state(const synapse_pb::BatteryState& msg);
     void publish_nav_sat_fix(const synapse_pb::NavSatFix& msg);
     void publish_status(const synapse_pb::Status& msg);
-    void publish_uptime(const synapse_pb::Time& msg);
+    void publish_uptime(const synapse_pb::Uptime& msg);
 
 private:
     builtin_interfaces::msg::Time ros_clock_offset_ {};
-
-    std_msgs::msg::Header compute_header(const synapse_pb::Header& msg);
+    builtin_interfaces::msg::Time compute_stamp(const synapse_pb::Timestamp& msg);
 
     // subscriptions ros -> cerebri
     rclcpp::Subscription<actuator_msgs::msg::Actuators>::SharedPtr sub_actuators_;
