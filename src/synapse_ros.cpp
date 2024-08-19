@@ -223,16 +223,16 @@ void SynapseRos::publish_nav_sat_fix(const synapse_pb::NavSatFix& msg)
     pub_nav_sat_fix_->publish(ros_msg);
 }
 
-void SynapseRos::publish_uptime(const synapse_pb::Uptime& msg)
+void SynapseRos::publish_uptime(const synapse_pb::ClockOffset& msg)
 {
     builtin_interfaces::msg::Time ros_uptime;
     rclcpp::Time now = get_clock()->now();
 
-    int64_t uptime_nanos = msg.uptime().seconds() * 1e9 + msg.uptime().nanos();
+    int64_t uptime_nanos = msg.offset().seconds() * 1e9 + msg.offset().nanos();
     int64_t clock_offset_nanos = now.nanoseconds() - uptime_nanos;
 
-    ros_uptime.sec = msg.uptime().seconds();
-    ros_uptime.nanosec = msg.uptime().nanos();
+    ros_uptime.sec = msg.offset().seconds();
+    ros_uptime.nanosec = msg.offset().nanos();
 
     ros_clock_offset_.sec = clock_offset_nanos / 1e9;
     ros_clock_offset_.nanosec = clock_offset_nanos - ros_clock_offset_.sec * 1e9;
@@ -321,9 +321,10 @@ void SynapseRos::cmd_vel_callback(const geometry_msgs::msg::Twist& msg) const
 
     // serialize message
     synapse_pb::Frame frame {};
-    frame.set_allocated_cmd_vel(&syn_msg);
+    frame.set_topic("cmd_vel");
+    frame.set_allocated_twist(&syn_msg);
     udp_send(frame);
-    frame.release_cmd_vel();
+    frame.release_twist();
 }
 
 void SynapseRos::input_callback(const synapse_msgs::msg::Input& msg) const
