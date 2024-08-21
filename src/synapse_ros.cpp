@@ -265,7 +265,7 @@ void SynapseRos::actuators_callback(const actuator_msgs::msg::Actuators& msg) co
     synapse_pb::Frame frame {};
     frame.set_allocated_actuators(&syn_msg);
     udp_send(frame);
-    frame.release_actuators();
+    (void)frame.release_actuators();
 }
 
 void SynapseRos::bezier_trajectory_callback(const synapse_msgs::msg::BezierTrajectory& msg) const
@@ -304,7 +304,7 @@ void SynapseRos::bezier_trajectory_callback(const synapse_msgs::msg::BezierTraje
     synapse_pb::Frame frame {};
     frame.set_allocated_bezier_trajectory(&syn_msg);
     udp_send(frame);
-    frame.release_bezier_trajectory();
+    (void)frame.release_bezier_trajectory();
 }
 
 void SynapseRos::cmd_vel_callback(const geometry_msgs::msg::Twist& msg) const
@@ -324,7 +324,7 @@ void SynapseRos::cmd_vel_callback(const geometry_msgs::msg::Twist& msg) const
     frame.set_topic("cmd_vel");
     frame.set_allocated_twist(&syn_msg);
     udp_send(frame);
-    frame.release_twist();
+    (void)frame.release_twist();
 }
 
 void SynapseRos::input_callback(const synapse_msgs::msg::Input& msg) const
@@ -338,7 +338,7 @@ void SynapseRos::input_callback(const synapse_msgs::msg::Input& msg) const
     synapse_pb::Frame frame {};
     frame.set_allocated_input(&syn_msg);
     udp_send(frame);
-    frame.release_input();
+    (void)frame.release_input();
 }
 
 void SynapseRos::odometry_callback(const nav_msgs::msg::Odometry& msg) const
@@ -377,7 +377,7 @@ void SynapseRos::odometry_callback(const nav_msgs::msg::Odometry& msg) const
     synapse_pb::Frame frame {};
     frame.set_allocated_odometry(&syn_msg);
     udp_send(frame);
-    frame.release_odometry();
+    (void)frame.release_odometry();
 }
 
 void SynapseRos::imu_callback(const sensor_msgs::msg::Imu& msg) const
@@ -402,7 +402,7 @@ void SynapseRos::imu_callback(const sensor_msgs::msg::Imu& msg) const
     synapse_pb::Frame frame {};
     frame.set_allocated_imu(&syn_msg);
     udp_send(frame);
-    frame.release_imu();
+    (void)frame.release_imu();
 }
 
 void SynapseRos::wheel_odometry_callback(const sensor_msgs::msg::JointState& msg) const
@@ -426,7 +426,7 @@ void SynapseRos::wheel_odometry_callback(const sensor_msgs::msg::JointState& msg
     synapse_pb::Frame frame {};
     frame.set_allocated_wheel_odometry(&syn_msg);
     udp_send(frame);
-    frame.release_wheel_odometry();
+    (void)frame.release_wheel_odometry();
 }
 
 void SynapseRos::clock_offset_callback(const builtin_interfaces::msg::Time& msg) const
@@ -441,7 +441,7 @@ void SynapseRos::clock_offset_callback(const builtin_interfaces::msg::Time& msg)
     synapse_pb::Frame frame {};
     frame.set_allocated_clock_offset(&syn_msg);
     udp_send(frame);
-    frame.release_clock_offset();
+    (void)frame.release_clock_offset();
 }
 
 void SynapseRos::battery_state_callback(const sensor_msgs::msg::BatteryState& msg) const
@@ -459,7 +459,7 @@ void SynapseRos::battery_state_callback(const sensor_msgs::msg::BatteryState& ms
     synapse_pb::Frame frame {};
     frame.set_allocated_battery_state(&syn_msg);
     udp_send(frame);
-    frame.release_battery_state();
+    (void)frame.release_battery_state();
 }
 
 void SynapseRos::magnetic_field_callback(const sensor_msgs::msg::MagneticField& msg) const
@@ -480,7 +480,7 @@ void SynapseRos::magnetic_field_callback(const sensor_msgs::msg::MagneticField& 
     synapse_pb::Frame frame {};
     frame.set_allocated_magnetic_field(&syn_msg);
     udp_send(frame);
-    frame.release_magnetic_field();
+    (void)frame.release_magnetic_field();
 }
 
 void SynapseRos::nav_sat_fix_callback(const sensor_msgs::msg::NavSatFix& msg) const
@@ -500,7 +500,7 @@ void SynapseRos::nav_sat_fix_callback(const sensor_msgs::msg::NavSatFix& msg) co
     synapse_pb::Frame frame {};
     frame.set_allocated_nav_sat_fix(&syn_msg);
     udp_send(frame);
-    frame.release_nav_sat_fix();
+    (void)frame.release_nav_sat_fix();
 }
 
 void SynapseRos::udp_send(const synapse_pb::Frame& frame) const
