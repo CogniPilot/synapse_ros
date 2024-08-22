@@ -73,9 +73,7 @@ void UDPLink::rx_handler(const boost::system::error_code& ec, std::size_t bytes_
                 } else if (frame.msg_case() == synapse_pb::Frame::kStatus) {
                     ros_->publish_status(frame.status());
                 } else if (frame.msg_case() == synapse_pb::Frame::kClockOffset) {
-                    if (frame.topic() == "uptime") {
-                        ros_->publish_uptime(frame.clock_offset());
-                    }
+                    ros_->publish_uptime(frame.clock_offset());
                 } else {
                     std::cerr << "unhandled message case" << frame.msg_case() << std::endl;
                     break;
