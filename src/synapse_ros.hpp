@@ -33,7 +33,7 @@
 #include <synapse_pb/twist.pb.h>
 #include <synapse_pb/wheel_odometry.pb.h>
 
-class UdpClient;
+class UDPLink;
 
 void udp_entry_point();
 
@@ -52,6 +52,7 @@ public:
 private:
     builtin_interfaces::msg::Time ros_clock_offset_ {};
     builtin_interfaces::msg::Time compute_stamp(const synapse_pb::Timestamp& msg);
+    void udp_run(void);
 
     // subscriptions ros -> cerebri
     rclcpp::Subscription<actuator_msgs::msg::Actuators>::SharedPtr sub_actuators_;
@@ -88,8 +89,9 @@ private:
     rclcpp::Publisher<builtin_interfaces::msg::Time>::SharedPtr pub_uptime_;
     rclcpp::Publisher<builtin_interfaces::msg::Time>::SharedPtr pub_clock_offset_;
 
-    // callbacks
+    // threading
     std::shared_ptr<std::thread> udp_thread_;
+    std::shared_ptr<UDPLink> udp_link_;
 };
 
 // vi: ts=4 sw=4 et

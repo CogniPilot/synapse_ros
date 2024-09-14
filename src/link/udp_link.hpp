@@ -23,12 +23,12 @@ private:
     boost::asio::ip::udp::endpoint my_endpoint_;
 
 public:
-    SynapseRos* ros_ { NULL };
-    UDPLink(std::string host, int port);
+    UDPLink(std::string host, int port, SynapseRos* ros);
     void run_for(std::chrono::seconds sec);
     void write(const uint8_t* buf, uint32_t len);
 
 private:
+    SynapseRos* ros_;
     void timeout_handler();
     void tx_handler(const boost::system::error_code& error, std::size_t bytes_transferred);
     void rx_handler(const boost::system::error_code& error, std::size_t bytes_transferred);

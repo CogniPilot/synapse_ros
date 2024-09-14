@@ -15,17 +15,10 @@
 #include <synapse_pb/nav_sat_fix.pb.h>
 #include <synapse_pb/wheel_odometry.pb.h>
 
+using namespace std::chrono_literals;
 using namespace google::protobuf::util;
 
 using std::placeholders::_1;
-std::shared_ptr<UDPLink> g_udp_link { NULL };
-
-void udp_entry_point()
-{
-    while (rclcpp::ok()) {
-        g_udp_link->run_for(std::chrono::seconds(1));
-    }
-}
 
 SynapseRos::SynapseRos()
     : Node("synapse_ros")
@@ -85,9 +78,16 @@ SynapseRos::SynapseRos()
     pub_clock_offset_ = this->create_publisher<builtin_interfaces::msg::Time>("out/clock_offset", 10);
 
     // create udp link
-    g_udp_link = std::make_shared<UDPLink>(host, port);
-    g_udp_link.get()->ros_ = this;
-    udp_thread_ = std::make_shared<std::thread>(udp_entry_point);
+    udp_link_ = std::make_shared<UDPLink>(host, port, this);
+    udp_thread_ = std::make_shared<std::thread>(std::bind(
+        &SynapseRos::udp_run, this));
+}
+
+void SynapseRos::udp_run()
+{
+    while (rclcpp::ok()) {
+        udp_link_->run_for(1s);
+    }
 }
 
 SynapseRos::~SynapseRos()
@@ -510,8 +510,8 @@ void SynapseRos::udp_send(const synapse_pb::Frame& frame) const
         std::cerr << "Failed to serialize " << frame.msg_case() << std::endl;
         return;
     }
-    if (g_udp_link != nullptr) {
-        g_udp_link.get()->write((const uint8_t*)stream.str().c_str(), stream.str().length());
+    if (udp_link_.get() != nullptr) {
+        udp_link_->write((const uint8_t*)stream.str().c_str(), stream.str().length());
     }
 }
 
