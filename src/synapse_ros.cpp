@@ -1,5 +1,6 @@
 #include "synapse_ros.hpp"
 #include "link/udp_link.hpp"
+#include <condition_variable>
 #include <google/protobuf/util/delimited_message_util.h>
 #include <rclcpp/logger.hpp>
 #include <sensor_msgs/msg/detail/battery_state__struct.hpp>
@@ -9,6 +10,7 @@
 #include <synapse_pb/battery_state.pb.h>
 #include <synapse_pb/bezier_trajectory.pb.h>
 #include <synapse_pb/clock_offset.pb.h>
+#include <synapse_pb/covariance6.pb.h>
 #include <synapse_pb/frame.pb.h>
 #include <synapse_pb/input.pb.h>
 #include <synapse_pb/magnetic_field.pb.h>
@@ -134,6 +136,90 @@ void SynapseRos::publish_actuators(const synapse_pb::Actuators& msg)
     pub_actuators_->publish(ros_msg);
 }
 
+std::array<double, 36> covariance6_to_array(const synapse_pb::Covariance6& msg)
+{
+    std::array<double, 36> covariance;
+
+    covariance[0] = msg.x_x();
+    covariance[1] = msg.x_y();
+    covariance[2] = msg.x_z();
+    covariance[3] = msg.x_rx();
+    covariance[4] = msg.x_ry();
+    covariance[5] = msg.x_rz();
+
+    covariance[6 * 1 + 1] = msg.y_y();
+    covariance[6 * 1 + 2] = msg.y_z();
+    covariance[6 * 1 + 3] = msg.y_rx();
+    covariance[6 * 1 + 4] = msg.y_ry();
+    covariance[6 * 1 + 5] = msg.y_rz();
+
+    covariance[6 * 2 + 2] = msg.z_z();
+    covariance[6 * 2 + 3] = msg.z_rx();
+    covariance[6 * 2 + 4] = msg.z_ry();
+    covariance[6 * 2 + 5] = msg.z_rz();
+
+    covariance[6 * 3 + 3] = msg.rx_rx();
+    covariance[6 * 3 + 4] = msg.rx_ry();
+    covariance[6 * 3 + 5] = msg.rx_rz();
+
+    covariance[6 * 4 + 4] = msg.ry_ry();
+    covariance[6 * 4 + 5] = msg.ry_rz();
+
+    covariance[6 * 5 + 5] = msg.rz_rz();
+
+    // copy symmetric portion
+    for (int i = 0; i < 6; i++) {
+        for (int j = i + 1; j < 6; j++) {
+            covariance[6 * j + i] = covariance[6 * i + j];
+        }
+    }
+
+    // force diagonal to have non-zero
+    for (int i = 0; i < 6; i++) {
+        if (std::fabs(covariance[6 * i + i]) < 1e-6) {
+            covariance[6 * i + i] = 0.1;
+        }
+    }
+    return covariance;
+}
+
+void array_to_covariance6(const std::array<double, 36>& array, synapse_pb::Covariance6* msg)
+{
+    std::array<double, 36> b = array;
+    // force diagonal to have non-zero
+    for (int i = 0; i < 6; i++) {
+        if (b[6 * i + i] < 1e-6) {
+            b[6 * i + i] = 1;
+        }
+    }
+    msg->set_x_x(b[0]);
+    msg->set_x_y(b[0 + 1]);
+    msg->set_x_z(b[0 + 2]);
+    msg->set_x_rx(b[0 + 3]);
+    msg->set_x_ry(b[0 + 4]);
+    msg->set_x_rz(b[0 + 5]);
+
+    msg->set_y_y(b[6 * 1 + 1]);
+    msg->set_y_z(b[6 * 1 + 2]);
+    msg->set_y_rx(b[6 * 1 + 3]);
+    msg->set_y_ry(b[6 * 1 + 4]);
+    msg->set_y_rz(b[6 * 1 + 5]);
+
+    msg->set_z_z(b[6 * 2 + 2]);
+    msg->set_z_rx(b[6 * 2 + 3]);
+    msg->set_z_ry(b[6 * 2 + 4]);
+    msg->set_z_rz(b[6 * 2 + 5]);
+
+    msg->set_rx_rx(b[6 * 3 + 3]);
+    msg->set_rx_ry(b[6 * 3 + 4]);
+    msg->set_rx_rz(b[6 * 3 + 5]);
+
+    msg->set_ry_ry(b[6 * 4 + 4]);
+    msg->set_ry_rz(b[6 * 4 + 5]);
+
+    msg->set_rz_rz(b[6 * 5 + 5]);
+}
+
 void SynapseRos::publish_odometry(const synapse_pb::Odometry& msg)
 {
     nav_msgs::msg::Odometry ros_msg;
@@ -155,6 +241,7 @@ void SynapseRos::publish_odometry(const synapse_pb::Odometry& msg)
     ros_msg.pose.pose.orientation.y = msg.pose().orientation().y();
     ros_msg.pose.pose.orientation.z = msg.pose().orientation().z();
     ros_msg.pose.pose.orientation.w = msg.pose().orientation().w();
+    ros_msg.pose.set__covariance(covariance6_to_array(msg.pose().covariance()));
 
     // twist
     ros_msg.twist.twist.linear.x = msg.twist().linear().x();
@@ -163,7 +250,7 @@ void SynapseRos::publish_odometry(const synapse_pb::Odometry& msg)
     ros_msg.twist.twist.angular.x = msg.twist().angular().x();
     ros_msg.twist.twist.angular.y = msg.twist().angular().y();
     ros_msg.twist.twist.angular.z = msg.twist().angular().z();
-
+    ros_msg.twist.set__covariance(covariance6_to_array(msg.twist().covariance()));
     pub_odometry_->publish(ros_msg);
 }
 
@@ -362,7 +449,7 @@ void SynapseRos::odometry_callback(const nav_msgs::msg::Odometry& msg) const
     syn_msg.mutable_pose()->mutable_orientation()->set_y(msg.pose.pose.orientation.y);
     syn_msg.mutable_pose()->mutable_orientation()->set_z(msg.pose.pose.orientation.z);
     syn_msg.mutable_pose()->mutable_orientation()->set_w(msg.pose.pose.orientation.w);
-    // skipping covariance
+    array_to_covariance6(msg.pose.covariance, syn_msg.mutable_pose()->mutable_covariance());
 
     // twist
     syn_msg.mutable_twist()->mutable_linear()->set_x(msg.twist.twist.linear.x);
@@ -371,7 +458,7 @@ void SynapseRos::odometry_callback(const nav_msgs::msg::Odometry& msg) const
     syn_msg.mutable_twist()->mutable_angular()->set_x(msg.twist.twist.angular.x);
     syn_msg.mutable_twist()->mutable_angular()->set_y(msg.twist.twist.angular.y);
     syn_msg.mutable_twist()->mutable_angular()->set_z(msg.twist.twist.angular.z);
-    // skipping covariance
+    array_to_covariance6(msg.pose.covariance, syn_msg.mutable_twist()->mutable_covariance());
 
     // serialize message
     synapse_pb::Frame frame {};
