@@ -189,7 +189,7 @@ void array_to_covariance6(const std::array<double, 36>& array, synapse_pb::Covar
     // force diagonal to have non-zero
     for (int i = 0; i < 6; i++) {
         if (b[6 * i + i] < 1e-6) {
-            b[6 * i + i] = 1;
+            b[6 * i + i] = 0.1;
         }
     }
     msg->set_x_x(b[0]);
