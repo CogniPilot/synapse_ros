@@ -1,6 +1,6 @@
-#ifndef SYNAPSE_ROS_PROTO_UDP_LINK_HPP__
-#define SYNAPSE_ROS_PROTO_UDP_LINK_HPP__
+#pragma once
 
+#include "link.hpp"
 #include <boost/asio.hpp>
 #include <boost/asio/signal_set.hpp>
 #include <boost/date_time/posix_time/posix_time_config.hpp>
@@ -8,7 +8,7 @@
 
 class SynapseRos;
 
-class UDPLink {
+class UDPLink : public Link {
 private:
     static const uint32_t rx_buf_length_ = 1024;
     std::mutex guard_rx_buf_;
@@ -35,5 +35,3 @@ private:
 };
 
 // vi: ts=4 sw=4 et
-
-#endif // SYNAPSE_ROS_PROTO_UDP_LINK_HPP__
