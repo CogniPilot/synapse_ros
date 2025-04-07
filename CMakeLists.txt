@@ -18,6 +18,7 @@ find_package(geometry_msgs REQUIRED)
 
 add_executable(${PROJECT_NAME}
   src/synapse_ros.cpp
+  src/link/link.cpp
   src/link/udp_link.cpp
   )
 
