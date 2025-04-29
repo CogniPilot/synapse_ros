@@ -11,6 +11,10 @@ ARGUMENTS = [
                           description='port for cerebri'),
     DeclareLaunchArgument('port', default_value='4242',
                           description='tcp port for cerebri'),
+    DeclareLaunchArgument('rpmsg_dev', default_value='',
+                          description=('RPMsg character device. When '
+                                       'configured this will be used instead '
+                                       'of sockets')),
     DeclareLaunchArgument('log_level', default_value='error',
                           choices=['info', 'warn', 'error'],
                           description='log level'),
@@ -34,6 +38,7 @@ def generate_launch_description():
         parameters=[{
             'host': LaunchConfiguration('host'),
             'port': LaunchConfiguration('port'),
+            'rpmsg_dev': LaunchConfiguration('rpmsg_dev'),
             'use_sim_time': LaunchConfiguration('use_sim_time'),
         }],
         output='screen',

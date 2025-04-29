@@ -1,5 +1,6 @@
 #include "synapse_ros.hpp"
 #include "link/udp_link.hpp"
+#include "link/rpmsg_link.hpp"
 #include <condition_variable>
 #include <google/protobuf/util/delimited_message_util.h>
 #include <rclcpp/logger.hpp>
@@ -20,12 +21,12 @@
 using namespace google::protobuf::util;
 
 using std::placeholders::_1;
-std::shared_ptr<UDPLink> g_udp_link { NULL };
+std::shared_ptr<Link> g_link { NULL };
 
 void udp_entry_point()
 {
     while (rclcpp::ok()) {
-        g_udp_link->run_for(std::chrono::seconds(1));
+        g_link->run_for(std::chrono::seconds(1));
     }
 }
 
@@ -34,6 +35,7 @@ SynapseRos::SynapseRos()
 {
     this->declare_parameter("host", "192.0.2.1");
     this->declare_parameter("port", 4242);
+    this->declare_parameter("rpmsg_dev", "");
     this->declare_parameter("hil_mode", false);
 
     std::string host = this->get_parameter("host").as_string();
@@ -86,9 +88,14 @@ SynapseRos::SynapseRos()
     pub_uptime_ = this->create_publisher<builtin_interfaces::msg::Time>("out/uptime", 10);
     pub_clock_offset_ = this->create_publisher<builtin_interfaces::msg::Time>("out/clock_offset", 10);
 
-    // create udp link
-    g_udp_link = std::make_shared<UDPLink>(host, port);
-    g_udp_link.get()->ros_ = this;
+    // create udp or rpmsg link
+    auto rpmsg_dev = this->get_parameter("rpmsg_dev").as_string();
+    if (rpmsg_dev.empty()) {
+        g_link = std::make_shared<UDPLink>(host, port);
+    } else {
+        g_link = std::make_shared<RPMsgLink>(rpmsg_dev);
+    }
+    g_link.get()->ros_ = this;
     udp_thread_ = std::make_shared<std::thread>(udp_entry_point);
 }
 
@@ -597,8 +604,8 @@ void SynapseRos::udp_send(const synapse_pb::Frame& frame) const
         std::cerr << "Failed to serialize " << frame.msg_case() << std::endl;
         return;
     }
-    if (g_udp_link != nullptr) {
-        g_udp_link.get()->write((const uint8_t*)stream.str().c_str(), stream.str().length());
+    if (g_link != nullptr) {
+        g_link.get()->write((const uint8_t*)stream.str().c_str(), stream.str().length());
     }
 }
 
