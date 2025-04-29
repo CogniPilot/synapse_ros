@@ -20,6 +20,7 @@ add_executable(${PROJECT_NAME}
   src/synapse_ros.cpp
   src/link/link.cpp
   src/link/udp_link.cpp
+  src/link/rpmsg_link.cpp
   )
 
 ament_target_dependencies(${PROJECT_NAME}
