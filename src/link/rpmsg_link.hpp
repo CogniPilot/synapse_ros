@@ -11,7 +11,7 @@ class thread;
 class RPMsgLink : public Link {
 
 public:
-    RPMsgLink(const std::string &rpmsg_device);
+    RPMsgLink(const std::string& rpmsg_device);
     ~RPMsgLink();
     void write(const uint8_t* buf, uint32_t len);
     void run_for(std::chrono::seconds sec);

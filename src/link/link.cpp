@@ -1,7 +1,7 @@
 #include "link.hpp"
 #include "../synapse_ros.hpp"
-#include <synapse_pb/frame.pb.h>
 #include <google/protobuf/util/delimited_message_util.h>
+#include <synapse_pb/frame.pb.h>
 
 using namespace google::protobuf::util;
 

@@ -1,6 +1,6 @@
 #include "synapse_ros.hpp"
-#include "link/udp_link.hpp"
 #include "link/rpmsg_link.hpp"
+#include "link/udp_link.hpp"
 #include <condition_variable>
 #include <google/protobuf/util/delimited_message_util.h>
 #include <rclcpp/logger.hpp>
@@ -367,6 +367,10 @@ void SynapseRos::bezier_trajectory_callback(const synapse_msgs::msg::BezierTraje
     synapse_pb::BezierTrajectory syn_msg;
     // syn_msg.set_time_start(msg.time_start);
 
+    // RCLCPP_DEBUG(this->get_logger(), "sending bezier trajectory");
+    syn_msg.mutable_time_start()->set_seconds(msg.time_start.sec);
+    syn_msg.mutable_time_start()->set_nanos(msg.time_start.nanosec);
+
     // header
     syn_msg.set_frame_id(msg.header.frame_id);
     syn_msg.mutable_stamp()->set_seconds(msg.header.stamp.sec);
@@ -374,6 +378,8 @@ void SynapseRos::bezier_trajectory_callback(const synapse_msgs::msg::BezierTraje
 
     for (auto i = 0u; i < msg.curves.size(); ++i) {
         synapse_pb::BezierTrajectory::Curve* curve = syn_msg.add_curves();
+        curve->mutable_time_stop()->set_nanos(msg.curves[i].time_stop.nanosec);
+        curve->mutable_time_stop()->set_seconds(msg.curves[i].time_stop.sec);
 
         // curve->set_time_stop(msg.curves[i].time_stop);
 

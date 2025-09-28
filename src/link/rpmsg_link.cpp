@@ -1,14 +1,14 @@
 #include "rpmsg_link.hpp"
 
-#include <iostream>
-#include <fcntl.h>
-#include <cstdlib>
 #include <cstdio>
-#include <unistd.h>
-#include <thread>
+#include <cstdlib>
+#include <fcntl.h>
+#include <iostream>
 #include <sys/poll.h>
+#include <thread>
+#include <unistd.h>
 
-RPMsgLink::RPMsgLink(const std::string &rpmsg_device) 
+RPMsgLink::RPMsgLink(const std::string& rpmsg_device)
 {
     f = open(rpmsg_device.c_str(), O_RDWR);
     if (f < 0) {
@@ -17,7 +17,7 @@ RPMsgLink::RPMsgLink(const std::string &rpmsg_device)
     }
 
     // Send dummy message to let zephyr know our channel ID
-    uint8_t dummy_message[] = {0xaa};
+    uint8_t dummy_message[] = { 0xaa };
     ::write(f, dummy_message, sizeof(dummy_message));
 }
 
@@ -32,7 +32,7 @@ void RPMsgLink::run_for(std::chrono::seconds sec)
 {
     (void)sec; // don't care about the seconds to run..
 
-    struct pollfd fds[1] = {f, POLLIN, 0};
+    struct pollfd fds[1] = { f, POLLIN, 0 };
 
     auto ret = poll(fds, 1, 100);
     if (ret < 0) {

@@ -13,7 +13,6 @@ public:
 
 protected:
     virtual void parse_protobuf_message(const uint8_t* buf, uint32_t len);
-
 };
 
 // vi: ts=4 sw=4 et
