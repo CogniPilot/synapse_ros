@@ -15,6 +15,7 @@ find_package(sensor_msgs REQUIRED)
 find_package(synapse_pb REQUIRED)
 find_package(synapse_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
+find_package(rosgraph_msgs REQUIRED)
 
 add_executable(${PROJECT_NAME}
   src/synapse_ros.cpp
@@ -24,7 +25,7 @@ add_executable(${PROJECT_NAME}
   )
 
 ament_target_dependencies(${PROJECT_NAME}
-  synapse_pb sensor_msgs actuator_msgs rclcpp nav_msgs builtin_interfaces synapse_msgs geometry_msgs)
+  synapse_pb sensor_msgs actuator_msgs rclcpp nav_msgs builtin_interfaces synapse_msgs geometry_msgs rosgraph_msgs)
 
 #==========================================================
 # install

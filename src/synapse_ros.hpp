@@ -5,6 +5,7 @@
 #include <builtin_interfaces/msg/time.hpp>
 #include <geometry_msgs/msg/twist.hpp>
 #include <nav_msgs/msg/odometry.hpp>
+#include <rosgraph_msgs/msg/clock.hpp>
 
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp/subscription_options.hpp>
@@ -29,6 +30,7 @@
 #include <synapse_pb/magnetic_field.pb.h>
 #include <synapse_pb/nav_sat_fix.pb.h>
 #include <synapse_pb/odometry.pb.h>
+#include <synapse_pb/sim_clock.pb.h>
 #include <synapse_pb/status.pb.h>
 #include <synapse_pb/twist.pb.h>
 #include <synapse_pb/wheel_odometry.pb.h>
@@ -54,6 +56,7 @@ private:
     builtin_interfaces::msg::Time compute_stamp(const synapse_pb::Timestamp& msg);
 
     // subscriptions ros -> cerebri
+    rclcpp::Subscription<rosgraph_msgs::msg::Clock>::SharedPtr sub_clock_;
     rclcpp::Subscription<actuator_msgs::msg::Actuators>::SharedPtr sub_actuators_;
     rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr sub_cmd_vel_;
     rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_odom_;
@@ -72,6 +75,7 @@ private:
     void bezier_trajectory_callback(const synapse_msgs::msg::BezierTrajectory& msg) const;
     void cmd_vel_callback(const geometry_msgs::msg::Twist& msg) const;
     void imu_callback(const sensor_msgs::msg::Imu& msg) const;
+    void clock_callback(const rosgraph_msgs::msg::Clock& msg) const;
     void input_callback(const synapse_msgs::msg::Input& msg) const;
     void magnetic_field_callback(const sensor_msgs::msg::MagneticField& msg) const;
     void nav_sat_fix_callback(const sensor_msgs::msg::NavSatFix& msg) const;

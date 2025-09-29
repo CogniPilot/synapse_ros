@@ -16,6 +16,7 @@
 #include <synapse_pb/input.pb.h>
 #include <synapse_pb/magnetic_field.pb.h>
 #include <synapse_pb/nav_sat_fix.pb.h>
+#include <synapse_pb/sim_clock.pb.h>
 #include <synapse_pb/wheel_odometry.pb.h>
 
 using namespace google::protobuf::util;
@@ -92,11 +93,19 @@ SynapseRos::SynapseRos()
         sub_magnetic_field_ = this->create_subscription<sensor_msgs::msg::MagneticField>(
             "in/magnetic_field", 10, std::bind(&SynapseRos::magnetic_field_callback, this, _1));
 
+        sub_odom_ = this->create_subscription<nav_msgs::msg::Odometry>(
+            "in/odometry", 10, std::bind(&SynapseRos::odometry_callback, this, _1));
+
         sub_nav_sat_fix_ = this->create_subscription<sensor_msgs::msg::NavSatFix>(
             "in/nav_sat_fix", 10, std::bind(&SynapseRos::nav_sat_fix_callback, this, _1));
+
+        pub_actuators_ = this->create_publisher<actuator_msgs::msg::Actuators>("out/actuators", 10);
     }
 
     if (mode == "sil") {
+        sub_clock_ = this->create_subscription<rosgraph_msgs::msg::Clock>(
+            "in/clock", 10, std::bind(&SynapseRos::clock_callback, this, _1));
+
         sub_imu_ = this->create_subscription<sensor_msgs::msg::Imu>(
             "in/imu", 10, std::bind(&SynapseRos::imu_callback, this, _1));
 
@@ -109,8 +118,13 @@ SynapseRos::SynapseRos()
         sub_magnetic_field_ = this->create_subscription<sensor_msgs::msg::MagneticField>(
             "in/magnetic_field", 10, std::bind(&SynapseRos::magnetic_field_callback, this, _1));
 
+        sub_odom_ = this->create_subscription<nav_msgs::msg::Odometry>(
+            "in/odometry", 10, std::bind(&SynapseRos::odometry_callback, this, _1));
+
         sub_nav_sat_fix_ = this->create_subscription<sensor_msgs::msg::NavSatFix>(
             "in/nav_sat_fix", 10, std::bind(&SynapseRos::nav_sat_fix_callback, this, _1));
+
+        pub_actuators_ = this->create_publisher<actuator_msgs::msg::Actuators>("out/actuators", 10);
     }
 
     // create udp or rpmsg link
@@ -502,6 +516,22 @@ void SynapseRos::odometry_callback(const nav_msgs::msg::Odometry& msg) const
     frame.set_allocated_odometry(&syn_msg);
     udp_send(frame);
     (void)frame.release_odometry();
+}
+
+void SynapseRos::clock_callback(const rosgraph_msgs::msg::Clock& msg) const
+{
+    // construct empty syn_msg
+    synapse_pb::SimClock syn_msg {};
+
+    // header
+    syn_msg.mutable_sim()->set_seconds(msg.clock.sec);
+    syn_msg.mutable_sim()->set_nanos(msg.clock.nanosec);
+
+    // serialize message
+    synapse_pb::Frame frame {};
+    frame.set_allocated_sim_clock(&syn_msg);
+    udp_send(frame);
+    (void)frame.release_imu();
 }
 
 void SynapseRos::imu_callback(const sensor_msgs::msg::Imu& msg) const
