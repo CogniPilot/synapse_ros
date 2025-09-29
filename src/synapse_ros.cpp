@@ -36,32 +36,48 @@ SynapseRos::SynapseRos()
     this->declare_parameter("host", "192.0.2.1");
     this->declare_parameter("port", 4242);
     this->declare_parameter("rpmsg_dev", "");
-    this->declare_parameter("hil_mode", false);
+    this->declare_parameter("mode", "real");
 
     std::string host = this->get_parameter("host").as_string();
     int port = this->get_parameter("port").as_int();
-    bool hil_mode = this->get_parameter("hil_mode").as_bool();
+    std::string rpmsg_dev = this->get_parameter("rpmsg_dev").as_string();
+    std::string mode = this->get_parameter("mode").as_string();
 
-    // subscriptions ros -> cerebri
-    sub_actuators_ = this->create_subscription<actuator_msgs::msg::Actuators>(
-        "in/actuators", 10, std::bind(&SynapseRos::actuators_callback, this, _1));
+    RCLCPP_INFO(this->get_logger(), "mode: %s host: %s port: %d rmmsg_dev: %s",
+        mode.c_str(), host.c_str(), port, rpmsg_dev.c_str());
 
-    sub_bezier_trajectory_ = this->create_subscription<synapse_msgs::msg::BezierTrajectory>(
-        "in/bezier_trajectory", 10, std::bind(&SynapseRos::bezier_trajectory_callback, this, _1));
+    if (mode == "real") {
+        // subscriptions ros -> cerebri
+        sub_actuators_ = this->create_subscription<actuator_msgs::msg::Actuators>(
+            "in/actuators", 10, std::bind(&SynapseRos::actuators_callback, this, _1));
 
-    sub_cmd_vel_ = this->create_subscription<geometry_msgs::msg::Twist>(
-        "in/cmd_vel", 10, std::bind(&SynapseRos::cmd_vel_callback, this, _1));
+        sub_bezier_trajectory_ = this->create_subscription<synapse_msgs::msg::BezierTrajectory>(
+            "in/bezier_trajectory", 10, std::bind(&SynapseRos::bezier_trajectory_callback, this, _1));
 
-    sub_input_ = this->create_subscription<synapse_msgs::msg::Input>(
-        "in/input", 10, std::bind(&SynapseRos::input_callback, this, _1));
+        sub_cmd_vel_ = this->create_subscription<geometry_msgs::msg::Twist>(
+            "in/cmd_vel", 10, std::bind(&SynapseRos::cmd_vel_callback, this, _1));
 
-    sub_odom_ = this->create_subscription<nav_msgs::msg::Odometry>(
-        "in/odometry", 10, std::bind(&SynapseRos::odometry_callback, this, _1));
+        sub_input_ = this->create_subscription<synapse_msgs::msg::Input>(
+            "in/input", 10, std::bind(&SynapseRos::input_callback, this, _1));
 
-    sub_clock_offset_ = this->create_subscription<builtin_interfaces::msg::Time>(
-        "out/clock_offset", 10, std::bind(&SynapseRos::clock_offset_callback, this, _1));
+        sub_odom_ = this->create_subscription<nav_msgs::msg::Odometry>(
+            "in/odometry", 10, std::bind(&SynapseRos::odometry_callback, this, _1));
 
-    if (hil_mode) {
+        sub_clock_offset_ = this->create_subscription<builtin_interfaces::msg::Time>(
+            "out/clock_offset", 10, std::bind(&SynapseRos::clock_offset_callback, this, _1));
+
+        // publications cerebri -> ros
+        pub_actuators_ = this->create_publisher<actuator_msgs::msg::Actuators>("out/actuators", 10);
+        pub_odometry_ = this->create_publisher<nav_msgs::msg::Odometry>("out/odometry", 10);
+        pub_battery_state_ = this->create_publisher<sensor_msgs::msg::BatteryState>("out/battery_state", 10);
+        pub_nav_sat_fix_ = this->create_publisher<sensor_msgs::msg::NavSatFix>("out/nav_sat_fix", 10);
+
+        pub_status_ = this->create_publisher<synapse_msgs::msg::Status>("out/status", 10);
+        pub_uptime_ = this->create_publisher<builtin_interfaces::msg::Time>("out/uptime", 10);
+        pub_clock_offset_ = this->create_publisher<builtin_interfaces::msg::Time>("out/clock_offset", 10);
+    }
+
+    if (mode == "hil") {
         sub_imu_ = this->create_subscription<sensor_msgs::msg::Imu>(
             "in/imu", 10, std::bind(&SynapseRos::imu_callback, this, _1));
 
@@ -78,18 +94,24 @@ SynapseRos::SynapseRos()
             "in/nav_sat_fix", 10, std::bind(&SynapseRos::nav_sat_fix_callback, this, _1));
     }
 
-    // publications cerebri -> ros
-    pub_actuators_ = this->create_publisher<actuator_msgs::msg::Actuators>("out/actuators", 10);
-    pub_odometry_ = this->create_publisher<nav_msgs::msg::Odometry>("out/odometry", 10);
-    pub_battery_state_ = this->create_publisher<sensor_msgs::msg::BatteryState>("out/battery_state", 10);
-    pub_nav_sat_fix_ = this->create_publisher<sensor_msgs::msg::NavSatFix>("out/nav_sat_fix", 10);
+    if (mode == "sil") {
+        sub_imu_ = this->create_subscription<sensor_msgs::msg::Imu>(
+            "in/imu", 10, std::bind(&SynapseRos::imu_callback, this, _1));
 
-    pub_status_ = this->create_publisher<synapse_msgs::msg::Status>("out/status", 10);
-    pub_uptime_ = this->create_publisher<builtin_interfaces::msg::Time>("out/uptime", 10);
-    pub_clock_offset_ = this->create_publisher<builtin_interfaces::msg::Time>("out/clock_offset", 10);
+        sub_wheel_odometry_ = this->create_subscription<sensor_msgs::msg::JointState>(
+            "in/wheel_odometry", 10, std::bind(&SynapseRos::wheel_odometry_callback, this, _1));
+
+        sub_battery_state_ = this->create_subscription<sensor_msgs::msg::BatteryState>(
+            "in/battery_state", 10, std::bind(&SynapseRos::battery_state_callback, this, _1));
+
+        sub_magnetic_field_ = this->create_subscription<sensor_msgs::msg::MagneticField>(
+            "in/magnetic_field", 10, std::bind(&SynapseRos::magnetic_field_callback, this, _1));
+
+        sub_nav_sat_fix_ = this->create_subscription<sensor_msgs::msg::NavSatFix>(
+            "in/nav_sat_fix", 10, std::bind(&SynapseRos::nav_sat_fix_callback, this, _1));
+    }
 
     // create udp or rpmsg link
-    auto rpmsg_dev = this->get_parameter("rpmsg_dev").as_string();
     if (rpmsg_dev.empty()) {
         g_link = std::make_shared<UDPLink>(host, port);
     } else {

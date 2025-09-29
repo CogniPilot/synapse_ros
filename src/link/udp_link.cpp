@@ -8,9 +8,10 @@ using std::placeholders::_1;
 using std::placeholders::_2;
 
 UDPLink::UDPLink(std::string host, int port)
+    : sock_(io_context_, boost::asio::ip::udp::endpoint(boost::asio::ip::udp::v4(), port))
 {
     remote_endpoint_ = *udp::resolver(io_context_).resolve(udp::resolver::query(host, std::to_string(port)));
-    my_endpoint_ = udp::endpoint(udp::v4(), 4242);
+    my_endpoint_ = udp::endpoint(udp::v4(), port);
 
     // schedule new rx
     sock_.async_receive_from(boost::asio::buffer(rx_buf_, rx_buf_length_),

@@ -10,15 +10,11 @@ class SynapseRos;
 
 class UDPLink : public Link {
 private:
-    static const uint32_t rx_buf_length_ = 1024;
+    static const uint32_t rx_buf_length_ = 4096;
     std::mutex guard_rx_buf_;
     uint8_t rx_buf_[rx_buf_length_];
     boost::asio::io_context io_context_ {};
-    boost::asio::ip::udp::socket sock_ {
-        boost::asio::ip::udp::socket(io_context_,
-            boost::asio::ip::udp::endpoint(
-                boost::asio::ip::udp::v4(), 4242))
-    };
+    boost::asio::ip::udp::socket sock_;
     boost::asio::ip::udp::endpoint remote_endpoint_;
     boost::asio::ip::udp::endpoint my_endpoint_;
 

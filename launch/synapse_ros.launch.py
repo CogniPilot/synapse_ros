@@ -15,6 +15,13 @@ ARGUMENTS = [
                           description=('RPMsg character device. When '
                                        'configured this will be used instead '
                                        'of sockets')),
+    DeclareLaunchArgument('mode', default_value='real',
+                          choices=['real', 'hil', 'sil'],
+                          description='communication mode, (real-life [rea]/ hardware-in-the-loop [hil]/ software-in-the-loop [sil])'),
+
+    DeclareLaunchArgument('namespace', default_value='cerebri',
+                          description='node namespace'),
+
     DeclareLaunchArgument('log_level', default_value='error',
                           choices=['info', 'warn', 'error'],
                           description='log level'),
@@ -29,21 +36,26 @@ def generate_launch_description():
     # Launch configurations
     host = LaunchConfiguration('host')
     port = LaunchConfiguration('port')
+    mode = LaunchConfiguration('mode')
+    rpmsg_dev = LaunchConfiguration('rpmsg_dev')
+    namespace = LaunchConfiguration('namespace')
+    use_sim_time = LaunchConfiguration('use_sim_time')
 
     synapse_ros = Node(
         #prefix='xterm -e gdb --args',
-        namespace='cerebri',
+        namespace=namespace,
         package='synapse_ros',
         executable='synapse_ros',
         parameters=[{
-            'host': LaunchConfiguration('host'),
-            'port': LaunchConfiguration('port'),
-            'rpmsg_dev': LaunchConfiguration('rpmsg_dev'),
-            'use_sim_time': LaunchConfiguration('use_sim_time'),
+            'host': host,
+            'port': port,
+            'mode': mode,
+            'rpmsg_dev': rpmsg_dev,
+            'use_sim_time': use_sim_time,
         }],
         output='screen',
         remappings=[
-            ('/cerebri/in/cmd_vel', '/cmd_vel')
+            ('in/cmd_vel', '/cmd_vel')
         ],
         arguments=['--ros-args', '--log-level', LaunchConfiguration('log_level')],
         on_exit=Shutdown(),
