@@ -20,7 +20,7 @@ private:
 
 public:
     SynapseRos* ros_ { NULL };
-    UDPLink(std::string host, int port);
+    UDPLink(std::string host, int port, int port_srv);
     void run_for(std::chrono::seconds sec);
     void write(const uint8_t* buf, uint32_t len);
 

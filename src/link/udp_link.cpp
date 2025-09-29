@@ -7,8 +7,8 @@ using boost::asio::ip::udp;
 using std::placeholders::_1;
 using std::placeholders::_2;
 
-UDPLink::UDPLink(std::string host, int port)
-    : sock_(io_context_, boost::asio::ip::udp::endpoint(boost::asio::ip::udp::v4(), port))
+UDPLink::UDPLink(std::string host, int port, int port_srv)
+    : sock_(io_context_, boost::asio::ip::udp::endpoint(boost::asio::ip::udp::v4(), port_srv))
 {
     remote_endpoint_ = *udp::resolver(io_context_).resolve(udp::resolver::query(host, std::to_string(port)));
     my_endpoint_ = udp::endpoint(udp::v4(), port);

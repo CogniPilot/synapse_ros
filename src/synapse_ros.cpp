@@ -115,7 +115,7 @@ SynapseRos::SynapseRos()
 
     // create udp or rpmsg link
     if (rpmsg_dev.empty()) {
-        g_link = std::make_shared<UDPLink>(host, port);
+        g_link = std::make_shared<UDPLink>(host, port, port_srv);
     } else {
         g_link = std::make_shared<RPMsgLink>(rpmsg_dev);
     }
