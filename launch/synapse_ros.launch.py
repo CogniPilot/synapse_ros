@@ -11,6 +11,8 @@ ARGUMENTS = [
                           description='port for cerebri'),
     DeclareLaunchArgument('port', default_value='4242',
                           description='tcp port for cerebri'),
+    DeclareLaunchArgument('port_srv', default_value='4242',
+                          description='tcp port for server'),
     DeclareLaunchArgument('rpmsg_dev', default_value='',
                           description=('RPMsg character device. When '
                                        'configured this will be used instead '
@@ -36,6 +38,7 @@ def generate_launch_description():
     # Launch configurations
     host = LaunchConfiguration('host')
     port = LaunchConfiguration('port')
+    port_srv = LaunchConfiguration('port_srv')
     mode = LaunchConfiguration('mode')
     rpmsg_dev = LaunchConfiguration('rpmsg_dev')
     namespace = LaunchConfiguration('namespace')
@@ -49,6 +52,7 @@ def generate_launch_description():
         parameters=[{
             'host': host,
             'port': port,
+            'port_srv': port_srv,
             'mode': mode,
             'rpmsg_dev': rpmsg_dev,
             'use_sim_time': use_sim_time,

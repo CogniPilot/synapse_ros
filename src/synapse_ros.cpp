@@ -35,16 +35,18 @@ SynapseRos::SynapseRos()
 {
     this->declare_parameter("host", "192.0.2.1");
     this->declare_parameter("port", 4242);
+    this->declare_parameter("port_srv", 4242);
     this->declare_parameter("rpmsg_dev", "");
     this->declare_parameter("mode", "real");
 
     std::string host = this->get_parameter("host").as_string();
     int port = this->get_parameter("port").as_int();
+    int port_srv = this->get_parameter("port").as_int();
     std::string rpmsg_dev = this->get_parameter("rpmsg_dev").as_string();
     std::string mode = this->get_parameter("mode").as_string();
 
-    RCLCPP_INFO(this->get_logger(), "mode: %s host: %s port: %d rmmsg_dev: %s",
-        mode.c_str(), host.c_str(), port, rpmsg_dev.c_str());
+    RCLCPP_INFO(this->get_logger(), "mode: %s server(0.0.0.0:%d) client(%s:%d) rmmsg_dev: %s",
+        mode.c_str(), port_srv, host.c_str(), port, rpmsg_dev.c_str());
 
     if (mode == "real") {
         // subscriptions ros -> cerebri
