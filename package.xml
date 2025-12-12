@@ -14,6 +14,8 @@
 
   <depend>rclcpp</depend>
   <depend>actuator_msgs</depend>
+  <depend>afbr_msgs</depend>
+  <depend>pixart_msgs</depend>
   <depend>sensor_msgs</depend>
   <depend>synapse_pb</depend>
   <depend>synapse_msgs</depend>

@@ -2,7 +2,9 @@
 #define SYNAPSE_ROS_CLIENT_HPP__
 
 #include <actuator_msgs/msg/actuators.hpp>
+#include <afbr_msgs/msg/argus_results.hpp>
 #include <builtin_interfaces/msg/time.hpp>
+#include <pixart_msgs/msg/pixart_paa3905.hpp>
 #include <geometry_msgs/msg/twist.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 
@@ -21,6 +23,7 @@
 #include <synapse_msgs/msg/status.hpp>
 
 #include <synapse_pb/actuators.pb.h>
+#include <synapse_pb/argus_results.pb.h>
 #include <synapse_pb/battery_state.pb.h>
 #include <synapse_pb/bezier_trajectory.pb.h>
 #include <synapse_pb/clock_offset.pb.h>
@@ -29,6 +32,7 @@
 #include <synapse_pb/magnetic_field.pb.h>
 #include <synapse_pb/nav_sat_fix.pb.h>
 #include <synapse_pb/odometry.pb.h>
+#include <synapse_pb/pixart_paa3905.pb.h>
 #include <synapse_pb/status.pb.h>
 #include <synapse_pb/twist.pb.h>
 #include <synapse_pb/wheel_odometry.pb.h>
@@ -43,11 +47,15 @@ public:
     virtual ~SynapseRos();
     void udp_send(const synapse_pb::Frame& frame) const;
     void publish_actuators(const synapse_pb::Actuators& msg);
+    void publish_argus_results(const synapse_pb::ArgusResults& msg);
     void publish_odometry(const synapse_pb::Odometry& msg);
     void publish_battery_state(const synapse_pb::BatteryState& msg);
     void publish_nav_sat_fix(const synapse_pb::NavSatFix& msg);
+    void publish_pixart_paa3905(const synapse_pb::PixartPAA3905& msg);
     void publish_status(const synapse_pb::Status& msg);
     void publish_uptime(const synapse_pb::ClockOffset& msg);
+    void publish_imu(const synapse_pb::Imu& msg);
+    void publish_magnetic_field(const synapse_pb::MagneticField& msg);
 
 private:
     builtin_interfaces::msg::Time ros_clock_offset_ {};
@@ -81,9 +89,13 @@ private:
 
     // publications cerebri -> ros
     rclcpp::Publisher<actuator_msgs::msg::Actuators>::SharedPtr pub_actuators_;
+    rclcpp::Publisher<afbr_msgs::msg::ArgusResults>::SharedPtr pub_argus_results_;
     rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr pub_odometry_;
     rclcpp::Publisher<sensor_msgs::msg::BatteryState>::SharedPtr pub_battery_state_;
+    rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr pub_imu_;
+    rclcpp::Publisher<sensor_msgs::msg::MagneticField>::SharedPtr pub_magnetic_field_;
     rclcpp::Publisher<sensor_msgs::msg::NavSatFix>::SharedPtr pub_nav_sat_fix_;
+    rclcpp::Publisher<pixart_msgs::msg::PixartPAA3905>::SharedPtr pub_pixart_paa3905_;
     rclcpp::Publisher<synapse_msgs::msg::Status>::SharedPtr pub_status_;
     rclcpp::Publisher<builtin_interfaces::msg::Time>::SharedPtr pub_uptime_;
     rclcpp::Publisher<builtin_interfaces::msg::Time>::SharedPtr pub_clock_offset_;

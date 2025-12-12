@@ -21,7 +21,7 @@ private:
 
     int f;
 
-    static constexpr uint32_t rx_buf_length_ = 1024;
+    static constexpr uint32_t rx_buf_length_ = 8192;
     uint8_t rx_buf_[rx_buf_length_];
 };
 

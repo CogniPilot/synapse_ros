@@ -9,7 +9,9 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(actuator_msgs REQUIRED)
+find_package(afbr_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
+find_package(pixart_msgs REQUIRED)
 find_package(builtin_interfaces REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(synapse_pb REQUIRED)
@@ -24,7 +26,7 @@ add_executable(${PROJECT_NAME}
   )
 
 ament_target_dependencies(${PROJECT_NAME}
-  synapse_pb sensor_msgs actuator_msgs rclcpp nav_msgs builtin_interfaces synapse_msgs geometry_msgs)
+  synapse_pb sensor_msgs actuator_msgs afbr_msgs pixart_msgs rclcpp nav_msgs builtin_interfaces synapse_msgs geometry_msgs)
 
 #==========================================================
 # install

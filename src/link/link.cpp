@@ -29,6 +29,14 @@ void Link::parse_protobuf_message(const uint8_t* buf, uint32_t len)
                 ros_->publish_status(frame.status());
             } else if (frame.msg_case() == synapse_pb::Frame::kClockOffset) {
                 ros_->publish_uptime(frame.clock_offset());
+            } else if (frame.msg_case() == synapse_pb::Frame::kArgusResults) {
+                ros_->publish_argus_results(frame.argus_results());
+            } else if (frame.msg_case() == synapse_pb::Frame::kPixartPaa3905) {
+                ros_->publish_pixart_paa3905(frame.pixart_paa3905());
+            } else if (frame.msg_case() == synapse_pb::Frame::kImu) {
+                ros_->publish_imu(frame.imu());
+            } else if (frame.msg_case() == synapse_pb::Frame::kMagneticField) {
+                ros_->publish_magnetic_field(frame.magnetic_field());
             } else {
                 std::cerr << "unhandled message case" << frame.msg_case() << std::endl;
                 break;

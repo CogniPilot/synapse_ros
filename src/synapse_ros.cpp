@@ -80,9 +80,13 @@ SynapseRos::SynapseRos()
 
     // publications cerebri -> ros
     pub_actuators_ = this->create_publisher<actuator_msgs::msg::Actuators>("out/actuators", 10);
+    pub_argus_results_ = this->create_publisher<afbr_msgs::msg::ArgusResults>("out/argus_results", 10);
     pub_odometry_ = this->create_publisher<nav_msgs::msg::Odometry>("out/odometry", 10);
     pub_battery_state_ = this->create_publisher<sensor_msgs::msg::BatteryState>("out/battery_state", 10);
     pub_nav_sat_fix_ = this->create_publisher<sensor_msgs::msg::NavSatFix>("out/nav_sat_fix", 10);
+    pub_pixart_paa3905_ = this->create_publisher<pixart_msgs::msg::PixartPAA3905>("out/pixart_paa3905", 10);
+    pub_imu_ = this->create_publisher<sensor_msgs::msg::Imu>("out/imu", 10);
+    pub_magnetic_field_ = this->create_publisher<sensor_msgs::msg::MagneticField>("out/magnetic_field", 10);
 
     pub_status_ = this->create_publisher<synapse_msgs::msg::Status>("out/status", 10);
     pub_uptime_ = this->create_publisher<builtin_interfaces::msg::Time>("out/uptime", 10);
@@ -141,6 +145,95 @@ void SynapseRos::publish_actuators(const synapse_pb::Actuators& msg)
     }
 
     pub_actuators_->publish(ros_msg);
+}
+
+void SynapseRos::publish_argus_results(const synapse_pb::ArgusResults& msg)
+{
+    afbr_msgs::msg::ArgusResults ros_msg;
+
+    // header
+    if (msg.has_stamp()) {
+        ros_msg.header.stamp = compute_stamp(msg.stamp());
+    }
+    ros_msg.header.frame_id = msg.frame_id();
+
+    // status
+    ros_msg.status = msg.status();
+
+    // frame
+    if (msg.has_frame()) {
+        afbr_msgs::msg::ArgusMeasureFrame frame;
+        frame.integration_time = msg.frame().integration_time();
+        frame.px_en_mask = msg.frame().px_en_mask();
+        frame.ch_en_mask = msg.frame().ch_en_mask();
+        frame.state = msg.frame().state();
+        frame.analog_integration_depth = msg.frame().analog_integration_depth();
+        frame.digital_integration_depth = msg.frame().digital_integration_depth();
+        frame.output_power = msg.frame().output_power();
+        frame.bias_current = msg.frame().bias_current();
+        frame.pixel_gain = msg.frame().pixel_gain();
+        frame.pll_offset = msg.frame().pll_offset();
+        frame.pll_ctrl_cur = msg.frame().pll_ctrl_cur();
+        ros_msg.frame.push_back(frame);
+    }
+
+    // time_stamp
+    if (msg.has_time_stamp()) {
+        ros_msg.time_stamp.sec = msg.time_stamp().seconds();
+        ros_msg.time_stamp.nanosec = msg.time_stamp().nanos();
+    }
+
+    // pixels
+    for (const auto& pixel : msg.pixel()) {
+        afbr_msgs::msg::ArgusPixel ros_pixel;
+        ros_pixel.range = pixel.range();
+        ros_pixel.phase = pixel.phase();
+        ros_pixel.amplitude = pixel.amplitude();
+        ros_pixel.status = pixel.status();
+        ros_pixel.range_window = pixel.range_window();
+        ros_pixel.amplitude_raw = pixel.amplitude_raw();
+        ros_pixel.uncorrelated_noise = pixel.uncorrelated_noise();
+        ros_pixel.snr = pixel.snr();
+        ros_msg.pixel.push_back(ros_pixel);
+    }
+
+    // pixel_ref
+    if (msg.has_pixel_ref()) {
+        afbr_msgs::msg::ArgusPixel ros_pixel_ref;
+        ros_pixel_ref.range = msg.pixel_ref().range();
+        ros_pixel_ref.phase = msg.pixel_ref().phase();
+        ros_pixel_ref.amplitude = msg.pixel_ref().amplitude();
+        ros_pixel_ref.status = msg.pixel_ref().status();
+        ros_pixel_ref.range_window = msg.pixel_ref().range_window();
+        ros_pixel_ref.amplitude_raw = msg.pixel_ref().amplitude_raw();
+        ros_pixel_ref.uncorrelated_noise = msg.pixel_ref().uncorrelated_noise();
+        ros_pixel_ref.snr = msg.pixel_ref().snr();
+        ros_msg.pixel_ref.push_back(ros_pixel_ref);
+    }
+
+    // bin
+    if (msg.has_bin()) {
+        afbr_msgs::msg::ArgusResultsBin ros_bin;
+        ros_bin.range = msg.bin().range();
+        ros_bin.amplitude = msg.bin().amplitude();
+        ros_bin.signal_quality = msg.bin().signal_quality();
+        ros_msg.bin.push_back(ros_bin);
+    }
+
+    // auxiliary
+    if (msg.has_auxiliary()) {
+        afbr_msgs::msg::ArgusResultsAux ros_aux;
+        ros_aux.vdd = msg.auxiliary().vdd();
+        ros_aux.temp = msg.auxiliary().temp();
+        ros_aux.vsub = msg.auxiliary().vsub();
+        ros_aux.vddl = msg.auxiliary().vddl();
+        ros_aux.iapd = msg.auxiliary().iapd();
+        ros_aux.bgl = msg.auxiliary().bgl();
+        ros_aux.sna = msg.auxiliary().sna();
+        ros_msg.auxiliary.push_back(ros_aux);
+    }
+
+    pub_argus_results_->publish(ros_msg);
 }
 
 std::array<double, 36> covariance6_to_array(const synapse_pb::Covariance6& msg)
@@ -317,6 +410,29 @@ void SynapseRos::publish_nav_sat_fix(const synapse_pb::NavSatFix& msg)
     pub_nav_sat_fix_->publish(ros_msg);
 }
 
+void SynapseRos::publish_pixart_paa3905(const synapse_pb::PixartPAA3905& msg)
+{
+    pixart_msgs::msg::PixartPAA3905 ros_msg;
+
+    // header
+    if (msg.has_stamp()) {
+        ros_msg.header.stamp = compute_stamp(msg.stamp());
+    }
+    ros_msg.header.frame_id = msg.frame_id();
+
+    // fields
+    ros_msg.motion = msg.motion();
+    ros_msg.mode = msg.mode();
+    ros_msg.delta_x = msg.delta_x();
+    ros_msg.delta_y = msg.delta_y();
+    ros_msg.delta_z = msg.delta_z();
+    ros_msg.challenge_condition = msg.challenge_condition();
+    ros_msg.squal = msg.squal();
+    ros_msg.shutter = msg.shutter();
+
+    pub_pixart_paa3905_->publish(ros_msg);
+}
+
 void SynapseRos::publish_uptime(const synapse_pb::ClockOffset& msg)
 {
     builtin_interfaces::msg::Time ros_uptime;
@@ -333,6 +449,58 @@ void SynapseRos::publish_uptime(const synapse_pb::ClockOffset& msg)
 
     pub_uptime_->publish(ros_uptime);
     pub_clock_offset_->publish(ros_clock_offset_);
+}
+
+void SynapseRos::publish_imu(const synapse_pb::Imu& msg)
+{
+    sensor_msgs::msg::Imu ros_msg;
+
+    // header
+    if (msg.has_stamp()) {
+        ros_msg.header.stamp = compute_stamp(msg.stamp());
+    }
+    ros_msg.header.frame_id = msg.frame_id();
+
+    // angular velocity
+    if (msg.has_angular_velocity()) {
+        ros_msg.angular_velocity.x = msg.angular_velocity().x();
+        ros_msg.angular_velocity.y = msg.angular_velocity().y();
+        ros_msg.angular_velocity.z = msg.angular_velocity().z();
+    }
+
+    // linear acceleration
+    if (msg.has_linear_acceleration()) {
+        ros_msg.linear_acceleration.x = msg.linear_acceleration().x();
+        ros_msg.linear_acceleration.y = msg.linear_acceleration().y();
+        ros_msg.linear_acceleration.z = msg.linear_acceleration().z();
+    }
+
+    pub_imu_->publish(ros_msg);
+}
+
+void SynapseRos::publish_magnetic_field(const synapse_pb::MagneticField& msg)
+{
+    sensor_msgs::msg::MagneticField ros_msg;
+
+    // header
+    if (msg.has_stamp()) {
+        ros_msg.header.stamp = compute_stamp(msg.stamp());
+    }
+    ros_msg.header.frame_id = msg.frame_id();
+
+    // magnetic field
+    if (msg.has_magnetic_field()) {
+        ros_msg.magnetic_field.x = msg.magnetic_field().x();
+        ros_msg.magnetic_field.y = msg.magnetic_field().y();
+        ros_msg.magnetic_field.z = msg.magnetic_field().z();
+    }
+
+    // covariance
+    for (int i = 0; i < msg.magnetic_field_covariance_size() && i < 9; i++) {
+        ros_msg.magnetic_field_covariance[i] = msg.magnetic_field_covariance(i);
+    }
+
+    pub_magnetic_field_->publish(ros_msg);
 }
 
 void SynapseRos::actuators_callback(const actuator_msgs::msg::Actuators& msg) const
